@@ -1,0 +1,216 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Viaje Seguro · Seguimiento en Vivo · Nuevo California</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+        .safe-header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .live-badge {
+            background: rgba(16, 185, 129, 0.18);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+        #safe-trip-map {
+            flex: 1 1 auto;
+            min-height: 360px;
+            width: 100%;
+            background: #1e293b;
+        }
+        .safe-bottom-sheet {
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 20px 20px 0 0;
+            padding: 1.25rem;
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.35);
+        }
+        .info-pill {
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+            height: 100%;
+        }
+        .info-pill .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+        }
+        .info-pill .val {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    <header class="safe-header">
+        <div class="d-flex align-items-center gap-2">
+            <span class="rounded-3 d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;background:#0f766e;color:#fff;">
+                <i class="bi bi-shield-fill-check fs-5"></i>
+            </span>
+            <div>
+                <div class="fw-bold" style="font-size:0.95rem;">Llegué Seguro · Nuevo California</div>
+                <div style="font-size:0.72rem;color:#94a3b8;">Enlace público de acompañamiento familiar en tiempo real</div>
+            </div>
+        </div>
+        <span class="live-badge">
+            <span class="pulse-dot"></span> GPS EN VIVO
+        </span>
+    </header>
+
+    <div id="safe-trip-map"></div>
+
+    <section class="safe-bottom-sheet">
+        <div class="container-fluid px-0" style="max-width:860px;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge fs-6 px-3 py-2" style="background:#0f766e;" id="st-linea">Línea {{ unidad.letra }}</span>
+                    <div>
+                        <div class="fw-bold fs-5" id="st-placa">Unidad {{ unidad.placa }} (Padrón {{ unidad.numeroPadron|default:'01' }})</div>
+                        <div class="small text-secondary"><i class="bi bi-person-badge me-1"></i>Conductor verificado: <strong id="st-conductor">{{ unidad.conductorNombre }}</strong></div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ wa_share_link }}" target="_blank" class="btn btn-success btn-sm fw-semibold px-3">
+                        <i class="bi bi-whatsapp me-1"></i> Compartir por WhatsApp
+                    </a>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="info-pill">
+                        <div class="label">Próximo Paradero</div>
+                        <div class="val" id="st-paradero">{{ unidad.proximoParadero }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="info-pill">
+                        <div class="label">Tiempo Estimado</div>
+                        <div class="val text-success" id="st-eta">~{{ unidad.etaMin }} min</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="info-pill">
+                        <div class="label">Velocidad Actual</div>
+                        <div class="val" id="st-vel">{{ unidad.velocidadKmh }} km/h</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="info-pill">
+                        <div class="label">Ocupación Comunitaria</div>
+                        <div class="val" id="st-ocup">{{ unidad.ocupacionLabel|default:'Asientos libres' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success py-2 px-3 mb-0 d-flex align-items-center justify-content-between flex-wrap gap-2 small">
+                <div>
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    <strong>Ruta monitoreada por Central Trujillo:</strong> Este vehículo transmite su telemetría oficial sin costo para tus familiares.
+                </div>
+                <span class="font-monospace small text-muted" id="st-coord">{{ unidad.lat }}, {{ unidad.lng }}</span>
+            </div>
+        </div>
+    </section>
+
+    <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+    <script>
+        if (typeof window.L === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');
+        }
+    </script>
+    <script>
+    (function() {
+        const initialUnit = {{ unidad_json|safe }};
+        const safeStops = {{ safe_stops_json|safe }};
+        const map = L.map('safe-trip-map').setView([initialUnit.lat || -8.1116, initialUnit.lng || -79.0287], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        const busHtml = '<div style="background:#0f766e;color:#fff;border:3px solid #fff;border-radius:10px;padding:4px 8px;font-weight:800;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.35);white-space:nowrap;">🚌 ' + (initialUnit.placa || 'T4A-812') + '</div>';
+        const busIcon = L.divIcon({ html: busHtml, className: '', iconSize: [90, 32], iconAnchor: [45, 16] });
+        const busMarker = L.marker([initialUnit.lat || -8.1116, initialUnit.lng || -79.0287], { icon: busIcon }).addTo(map);
+
+        safeStops.forEach(function(s) {
+            const stopIcon = L.divIcon({
+                html: '<div style="background:#059669;color:#fff;border:2px solid #fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.25);">🛡️</div>',
+                className: '',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+            L.marker([s.lat, s.lng], { icon: stopIcon })
+                .bindPopup('<strong>🛡️ Paradero Seguro: ' + s.nombre + '</strong><br>' + s.recomendacion)
+                .addTo(map);
+        });
+
+        async function pollSafeTrip() {
+            try {
+                const resp = await fetch("{% url 'live_api_state' %}");
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!Array.isArray(data.posiciones) || data.posiciones.length === 0) return;
+                const targetPlate = (initialUnit.placa || '').toUpperCase();
+                const u = data.posiciones.find(p => (p.placa || '').toUpperCase() === targetPlate) || data.posiciones[0];
+                if (!u || !u.lat || !u.lng) return;
+
+                busMarker.setLatLng([u.lat, u.lng]);
+                map.panTo([u.lat, u.lng]);
+                document.getElementById('st-placa').textContent = 'Unidad ' + u.placa + ' (Padrón ' + (u.numeroPadron || '01') + ')';
+                document.getElementById('st-conductor').textContent = u.conductorNombre || 'Conductor en turno';
+                document.getElementById('st-paradero').textContent = u.proximoParadero || 'En ruta';
+                document.getElementById('st-eta').textContent = '~' + (u.etaMin || 2) + ' min';
+                document.getElementById('st-vel').textContent = (u.velocidadKmh || 25) + ' km/h';
+                document.getElementById('st-ocup').textContent = u.ocupacionLabel || 'Asientos libres';
+                document.getElementById('st-coord').textContent = u.lat.toFixed(5) + ', ' + u.lng.toFixed(5);
+            } catch (e) {}
+        }
+
+        setInterval(pollSafeTrip, 3000);
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mono-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#042F2E"/>
+      <stop offset="50%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="emerald-neon" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="cyan-pulse" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#2DD4BF"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#mono-bg)"/>
+
+  <!-- Satellite Signal Waves at Top Center -->
+  <path d="M 216 75 C 240 60, 272 60, 296 75" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 231 92 C 246 82, 266 82, 281 92" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="256" cy="105" r="7" fill="#F59E0B"/>
+
+  <!-- The Monogram 'T' (Trujillo / Transporte) fused with Bus Front & Highway -->
+  <path d="M 100 130 C 100 120, 110 110, 125 110 L 387 110 C 402 110, 412 120, 412 130 L 412 190 C 412 205, 400 215, 385 215 L 305 215 L 305 405 C 305 420, 295 430, 280 430 L 232 430 C 217 430, 207 420, 207 405 L 207 215 L 127 215 C 112 215, 100 205, 100 190 Z" 
+        fill="#0F172A" stroke="url(#emerald-neon)" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Bus Windshield in the Top Crossbar -->
+  <rect x="130" y="132" width="252" height="58" rx="14" fill="url(#cyan-pulse)" opacity="0.9"/>
+
+  <!-- LED Route Sign -->
+  <rect x="196" y="140" width="120" height="18" rx="6" fill="#042F2E"/>
+  <text x="256" y="154" fill="#34D399" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" font-weight="900" text-anchor="middle" letter-spacing="2">RUTA T-01</text>
+
+  <!-- Dual LED Projector Headlights on the Bus Shoulders -->
+  <circle cx="138" cy="195" r="10" fill="#FBBF24" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="374" cy="195" r="10" fill="#FBBF24" stroke="#FFFFFF" stroke-width="3"/>
+
+  <!-- Vertical Pillar of 'T' = Highway Avenue with Perspective Dashed Centerlines -->
+  <line x1="256" y1="230" x2="256" y2="270" stroke="#FBBF24" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="295" x2="256" y2="345" stroke="#FBBF24" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="370" x2="256" y2="415" stroke="#FBBF24" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Road Edge Guardrails -->
+  <line x1="220" y1="225" x2="220" y2="415" stroke="#2DD4BF" stroke-width="3" opacity="0.5"/>
+  <line x1="292" y1="225" x2="292" y2="415" stroke="#2DD4BF" stroke-width="3" opacity="0.5"/>
+</svg>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="spring-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022C22"/>
+      <stop offset="50%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="petal-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="petal-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#0D9488"/>
+    </linearGradient>
+    <linearGradient id="sun-core" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#spring-bg)"/>
+
+  <!-- Orbital Highway Ring (Ovalo de la Av. Espana) -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#2DD4BF" stroke-width="12" stroke-dasharray="24 16" opacity="0.35"/>
+
+  <!-- 4 Petals arranged as cloverleaf interchange (Trebol vial primaveral) -->
+  <!-- Top Petal (Route North / La Esperanza) -->
+  <path d="M 256 256 C 210 170, 190 90, 256 70 C 322 90, 302 170, 256 256 Z" fill="url(#petal-1)" opacity="0.9"/>
+  <!-- Right Petal (Route East / Laredo - El Porvenir) -->
+  <path d="M 256 256 C 342 210, 422 190, 442 256 C 422 322, 342 302, 256 256 Z" fill="url(#petal-2)" opacity="0.9"/>
+  <!-- Bottom Petal (Route South / Victor Larco - Moche) -->
+  <path d="M 256 256 C 302 342, 322 422, 256 442 C 190 422, 210 342, 256 256 Z" fill="url(#petal-1)" opacity="0.9"/>
+  <!-- Left Petal (Route West / Huanchaco - Buenos Aires) -->
+  <path d="M 256 256 C 170 302, 90 322, 70 256 C 90 190, 170 210, 256 256 Z" fill="url(#petal-2)" opacity="0.9"/>
+
+  <!-- Moving Buses at North and South Nodes -->
+  <!-- North Bus -->
+  <g transform="translate(231, 80)">
+    <rect x="0" y="0" width="50" height="42" rx="12" fill="#FFFFFF" stroke="#064E3B" stroke-width="4"/>
+    <rect x="8" y="6" width="34" height="14" rx="4" fill="#10B981"/>
+    <circle cx="14" cy="30" r="5" fill="#F59E0B"/>
+    <circle cx="36" cy="30" r="5" fill="#F59E0B"/>
+  </g>
+
+  <!-- South Bus -->
+  <g transform="translate(231, 390)">
+    <rect x="0" y="0" width="50" height="42" rx="12" fill="#FFFFFF" stroke="#064E3B" stroke-width="4"/>
+    <rect x="8" y="22" width="34" height="14" rx="4" fill="#10B981"/>
+    <circle cx="14" cy="12" r="5" fill="#F59E0B"/>
+    <circle cx="36" cy="12" r="5" fill="#F59E0B"/>
+  </g>
+
+  <!-- Central Golden Sun / Rosa de los Vientos (Eterna Primavera) -->
+  <circle cx="256" cy="256" r="48" fill="url(#sun-core)" stroke="#FFFFFF" stroke-width="6"/>
+  <polygon points="256,220 266,246 292,256 266,266 256,292 246,266 220,256 246,246" fill="#78350F"/>
+  <circle cx="256" cy="256" r="6" fill="#FFFFFF"/>
+</svg>

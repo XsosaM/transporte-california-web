@@ -1,138 +1,462 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
 
-{% block title %}Resumen{% endblock %}
+{% block title %}Panel general · Nuevo California{% endblock %}
+{% block page_title %}Panel general{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS: primero local, con fallback a cdnjs sin integrity estricto -->
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+    #dashboard-live-map {
+        height: 460px;
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid var(--nc-border);
+        background: #e5e7eb;
+    }
+    @media (max-width: 767.98px) {
+        #dashboard-live-map { height: 360px; }
+        .map-btn-group .btn { padding: 0.25rem 0.45rem; font-size: 0.7rem; }
+    }
+    .unit-detail dt { font-size: 0.75rem; color: var(--nc-muted); font-weight: 500; }
+    .unit-detail dd { font-weight: 600; margin-bottom: 0.65rem; }
+    .empty-state { color: var(--nc-muted); font-size: 0.875rem; text-align: center; padding: 1.5rem 0.5rem; }
+    .empty-state i { font-size: 1.5rem; display: block; margin-bottom: 0.35rem; color: #9ca3af; }
+    .passenger-row { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid #f1f2f4; font-size: 0.86rem; }
+    .passenger-row:last-child { border-bottom: none; }
+    .map-btn-group .btn { font-size: 0.75rem; padding: 0.25rem 0.65rem; }
+    .map-btn-group .btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+</style>
+{% endblock %}
+
+{% block page_actions %}
+<a class="btn btn-outline-secondary btn-sm" href="{% url 'incidents_create' %}"><i class="bi bi-plus"></i> Incidencia</a>
+<a class="btn btn-success btn-sm" href="{% url 'shifts_create' %}"><i class="bi bi-plus"></i> Programar turno</a>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div>
-        <h1 class="page-title">Resumen operativo</h1>
-        <p class="page-subtitle">Estado de la operación · {{ today|date:"l, j F Y" }}</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a class="btn btn-outline-success" href="{% url 'shifts_create' %}"><i class="bi bi-calendar-plus me-1"></i>Programar turno</a>
-        <a class="btn btn-success" href="{% url 'dispatch_create' %}"><i class="bi bi-plus-lg me-1"></i>Nuevo despacho</a>
-    </div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-6 col-xl">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-truck-front"></i></span>
-            <div class="metric-value">{{ vehicle_count }}</div>
-            <div class="metric-label">Unidades activas</div>
-        </div>
-    </div>
-    <div class="col-6 col-xl">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-person-check"></i></span>
-            <div class="metric-value">{{ driver_count }}</div>
-            <div class="metric-label">Conductores habilitados</div>
-        </div>
-    </div>
-    <div class="col-6 col-xl">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
-            <div class="metric-value">{{ today_shifts }}</div>
-            <div class="metric-label">Turnos de hoy</div>
-        </div>
-    </div>
-    <div class="col-6 col-xl">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-arrow-repeat"></i></span>
-            <div class="metric-value">{{ today_dispatches }}</div>
-            <div class="metric-label">Vueltas despachadas</div>
-        </div>
-    </div>
-    <div class="col-6 col-xl">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-exclamation-circle"></i></span>
-            <div class="metric-value">{{ open_incidents }}</div>
-            <div class="metric-label">Incidencias pendientes</div>
-        </div>
-    </div>
-</div>
-
-{% if document_alerts or license_alerts or maintenance_alerts %}
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="d-flex align-items-center gap-2 mb-3">
-            <i class="bi bi-shield-exclamation text-warning fs-5"></i>
-            <h2 class="h6 fw-bold mb-0">Alertas operativas</h2>
-        </div>
-        <div class="d-flex flex-wrap gap-2">
-            {% for vehicle in document_alerts %}
-                <a class="badge rounded-pill text-bg-warning text-decoration-none p-2" href="{% url 'fleet_list' %}">{{ vehicle.unit_code }} · documento vencido o por vencer</a>
-            {% endfor %}
-            {% for driver in license_alerts %}
-                <a class="badge rounded-pill text-bg-danger text-decoration-none p-2" href="{% url 'drivers_list' %}">{{ driver.full_name }} · brevete vencido o por vencer</a>
-            {% endfor %}
-            {% for vehicle in maintenance_alerts %}
-                <a class="badge rounded-pill text-bg-info text-dark text-decoration-none p-2" href="{% url 'fleet_list' %}">{{ vehicle.unit_code }} · mantenimiento {{ vehicle.maintenance_due|date:"d/m/Y" }}</a>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<div class="row g-3">
-    <div class="col-xl-7">
-        <section class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+<!-- Indicadores -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <h2 class="h6 fw-bold mb-0">Turnos próximos</h2>
-                    <small class="muted">Asignaciones programadas para hoy en adelante</small>
+                    <div class="metric-label">Unidades en ruta</div>
+                    <div class="metric-value" id="kpi-live-buses">{{ live_positions|length }}</div>
                 </div>
-                <a href="{% url 'shifts_list' %}" class="small text-decoration-none">Ver turnos <i class="bi bi-arrow-right"></i></a>
+                <span class="metric-icon"><i class="bi bi-broadcast"></i></span>
             </div>
-            {% if recent_shifts %}
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Pasajeros esperando</div>
+                    <div class="metric-value" id="kpi-waiting-passengers">{{ waiting_passengers_total|default:0 }}</div>
+                </div>
+                <span class="metric-icon"><i class="bi bi-people"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Turnos de hoy</div>
+                    <div class="metric-value">{{ today_shifts }}</div>
+                </div>
+                <span class="metric-icon"><i class="bi bi-calendar3"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Flota habilitada</div>
+                    <div class="metric-value">{{ vehicle_count }}</div>
+                </div>
+                <span class="metric-icon"><i class="bi bi-truck-front"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Incidencias abiertas</div>
+                    <div class="metric-value" id="kpi-open-incidents">{{ open_incidents }}</div>
+                </div>
+                <span class="metric-icon"><i class="bi bi-exclamation-triangle"></i></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mapa en vivo -->
+<div class="row g-3 mb-3">
+    <div class="col-xl-8">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                    <h2 class="panel-title">Monitoreo en tiempo real</h2>
+                    <p class="panel-subtitle">Posición GPS reportada por el conductor y pasajeros en espera.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group btn-group-sm map-btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" id="btn-map-google">
+                            <i class="bi bi-map"></i> Google Maps
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btn-map-sat">
+                            <i class="bi bi-globe-americas"></i> Satélite
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btn-map-osm">
+                            OSM
+                        </button>
+                    </div>
+                    <a href="{% url 'routes_list' %}" class="btn btn-outline-secondary btn-sm">Ver rutas</a>
+                </div>
+            </div>
+            <div id="dashboard-live-map"></div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 d-flex flex-column gap-3">
+        <div class="panel-card p-3">
+            <h2 class="panel-title mb-3">Unidad en servicio</h2>
+            <div id="unit-detail"></div>
+        </div>
+        <div class="panel-card p-3 flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="panel-title">Pasajeros en espera</h2>
+                <span class="badge text-bg-secondary" id="badge-count-passengers">{{ live_passengers|length }}</span>
+            </div>
+            <div id="passenger-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Operación -->
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="panel-card">
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <div>
+                    <h2 class="panel-title">Próximos turnos</h2>
+                    <p class="panel-subtitle">Salidas programadas pendientes.</p>
+                </div>
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'shifts_list' %}">Ver todos</a>
+            </div>
             <div class="table-responsive">
-                <table class="table">
-                    <thead><tr><th>Hora</th><th>Ruta</th><th>Conductor</th><th>Unidad</th><th>Estado</th></tr></thead>
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr><th>Fecha</th><th>Salida</th><th>Ruta</th><th>Conductor</th><th>Unidad</th><th>Estado</th></tr>
+                    </thead>
                     <tbody>
                         {% for shift in recent_shifts %}
-                        <tr>
-                            <td><span class="fw-semibold">{{ shift.planned_departure|time:"H:i" }}</span><small class="d-block muted">{{ shift.service_date|date:"d/m" }}</small></td>
-                            <td>{{ shift.route.code }}</td>
-                            <td>{{ shift.driver.full_name }}</td>
-                            <td>{{ shift.vehicle.plate }}</td>
-                            <td><span class="badge text-bg-light border">{{ shift.get_status_display }}</span></td>
-                        </tr>
+                            <tr>
+                                <td>{{ shift.service_date|date:"d/m/Y" }}</td>
+                                <td class="font-mono-tech">{{ shift.planned_departure|time:"H:i" }}</td>
+                                <td>{{ shift.route.code }}</td>
+                                <td>{{ shift.driver.full_name }}</td>
+                                <td class="font-mono-tech">{{ shift.vehicle.plate }}</td>
+                                <td><span class="badge text-bg-secondary">{{ shift.get_status_display }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="empty-state">No hay turnos pendientes.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            {% else %}
-            <div class="empty-state"><i class="bi bi-calendar-x fs-3 d-block mb-2"></i>No hay turnos próximos.<br><a href="{% url 'shifts_create' %}">Programa el primero</a></div>
-            {% endif %}
-        </section>
+        </div>
     </div>
-    <div class="col-xl-5">
-        <section class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
-                <div>
-                    <h2 class="h6 fw-bold mb-0">Unidades en ruta</h2>
-                    <small class="muted">Vueltas con salida registrada</small>
+
+    <div class="col-xl-4">
+        <div class="panel-card p-3 h-100">
+            <h2 class="panel-title mb-1">Alertas documentarias</h2>
+            <p class="panel-subtitle mb-3">Vencimientos en los próximos 30 días.</p>
+
+            {% for vehicle in document_alerts %}
+                <div class="passenger-row">
+                    <span><i class="bi bi-file-earmark-text text-secondary me-1"></i>{{ vehicle.plate }}</span>
+                    <span class="text-secondary small">SOAT {{ vehicle.soat_expiry|date:"d/m/Y" }}</span>
                 </div>
-                <a href="{% url 'dispatch_list' %}" class="small text-decoration-none">Despacho <i class="bi bi-arrow-right"></i></a>
-            </div>
-            {% if active_dispatches %}
-                <div class="list-group list-group-flush">
-                    {% for dispatch in active_dispatches %}
-                    <div class="list-group-item px-4 py-3">
-                        <div class="d-flex justify-content-between gap-3">
-                            <div>
-                                <div class="fw-bold">{{ dispatch.shift.vehicle.plate }} <span class="fw-normal muted">· {{ dispatch.shift.route.code }}</span></div>
-                                <small class="muted">{{ dispatch.shift.driver.full_name }} · Vuelta {{ dispatch.sequence }}</small>
-                            </div>
-                            <span class="badge text-bg-primary align-self-start">En ruta</span>
-                        </div>
-                    </div>
-                    {% endfor %}
+            {% endfor %}
+            {% for vehicle in maintenance_alerts %}
+                <div class="passenger-row">
+                    <span><i class="bi bi-wrench text-secondary me-1"></i>{{ vehicle.plate }}</span>
+                    <span class="text-secondary small">Mant. {{ vehicle.maintenance_due|date:"d/m/Y" }}</span>
                 </div>
-            {% else %}
-                <div class="empty-state"><i class="bi bi-signpost fs-3 d-block mb-2"></i>No hay unidades en ruta en este momento.</div>
+            {% endfor %}
+            {% for driver in license_alerts %}
+                <div class="passenger-row">
+                    <span><i class="bi bi-person-vcard text-secondary me-1"></i>{{ driver.full_name }}</span>
+                    <span class="text-secondary small">Brevete {{ driver.license_expiry|date:"d/m/Y" }}</span>
+                </div>
+            {% endfor %}
+            {% if not document_alerts and not maintenance_alerts and not license_alerts %}
+                <div class="empty-state"><i class="bi bi-check-circle"></i>Sin vencimientos próximos.</div>
             {% endif %}
-        </section>
+        </div>
     </div>
 </div>
+
+{{ live_positions|json_script:"dashboard-initial-positions" }}
+{{ live_passengers|json_script:"dashboard-initial-passengers" }}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Carga de Leaflet local con fallback a cdnjs -->
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script>
+if (typeof L === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');
+}
+</script>
+
+<script>
+(function () {
+    window.ncSetApiStatus({{ api_online|yesno:"true,false" }});
+
+    const mapContainer = document.getElementById("dashboard-live-map");
+    if (!mapContainer || typeof L === "undefined") return;
+
+    // Inicializar mapa centrado en Trujillo
+    const map = L.map(mapContainer, {
+        center: [-8.1116, -79.0287],
+        zoom: 14,
+        zoomControl: true
+    });
+
+    // Capas de mapas: Google Maps Calles, Google Maps Satélite e OpenStreetMap
+    const layerGoogle = L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+        maxZoom: 20,
+        attribution: "&copy; Google Maps"
+    });
+    const layerSat = L.tileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+        maxZoom: 20,
+        attribution: "&copy; Google Satellite"
+    });
+    const layerOsm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap"
+    });
+
+    // Activar Google Maps por defecto
+    layerGoogle.addTo(map);
+    let activeLayer = layerGoogle;
+
+    // Selector de capas
+    const btnGoogle = document.getElementById("btn-map-google");
+    const btnSat = document.getElementById("btn-map-sat");
+    const btnOsm = document.getElementById("btn-map-osm");
+
+    function switchLayer(newLayer, activeBtn) {
+        map.removeLayer(activeLayer);
+        newLayer.addTo(map);
+        activeLayer = newLayer;
+        [btnGoogle, btnSat, btnOsm].forEach(b => b && b.classList.remove("active"));
+        if (activeBtn) activeBtn.classList.add("active");
+    }
+
+    if (btnGoogle) btnGoogle.addEventListener("click", () => switchLayer(layerGoogle, btnGoogle));
+    if (btnSat) btnSat.addEventListener("click", () => switchLayer(layerSat, btnSat));
+    if (btnOsm) btnOsm.addEventListener("click", () => switchLayer(layerOsm, btnOsm));
+
+    // Forzar redibujado de tamaño para asegurar que nunca se quede en gris
+    setTimeout(() => map.invalidateSize(), 150);
+    setTimeout(() => map.invalidateSize(), 500);
+    window.addEventListener("resize", () => map.invalidateSize());
+
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+        function busIcon(bus) {
+        const letra = esc(bus.letra || 'A');
+        const placa = esc(bus.placa || 'T4A-812');
+        return L.divIcon({
+            className: "nc-2d-bus-marker",
+            html: `<div style="position:relative;width:80px;height:68px;cursor:pointer;filter:drop-shadow(0 4px 8px rgba(15,23,42,0.35));">
+                <!-- Floating HUD Pill -->
+                <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:#0f172a;color:#ffffff;
+                            border:1.5px solid #2dd4bf;border-radius:10px;padding:1px 6px;font-family:'Inter',sans-serif;
+                            font-weight:700;font-size:10px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:3;
+                            display:flex;align-items:center;gap:4px;">
+                    <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;"></span>
+                    <span>L-${letra} · ${placa}</span>
+                </div>
+                <!-- 2D Frontal Bus SVG -->
+                <svg width="80" height="48" viewBox="0 0 80 48" style="position:absolute;bottom:0;left:0;overflow:visible;">
+                    <ellipse cx="40" cy="45" rx="24" ry="3.5" fill="rgba(15,23,42,0.3)"/>
+                    <!-- Tires -->
+                    <rect x="18" y="35" width="6" height="8" rx="2" fill="#1e293b"/>
+                    <rect x="56" y="35" width="6" height="8" rx="2" fill="#1e293b"/>
+                    <!-- Mirrors -->
+                    <rect x="15" y="18" width="4" height="8" rx="1.5" fill="#0f766e"/>
+                    <rect x="15.5" y="19" width="2.5" height="6" rx="1" fill="#bae6fd"/>
+                    <rect x="61" y="18" width="4" height="8" rx="1.5" fill="#0f766e"/>
+                    <rect x="62" y="19" width="2.5" height="6" rx="1" fill="#bae6fd"/>
+                    <!-- Bus Body 2D Front -->
+                    <rect x="21" y="9" width="38" height="34" rx="6" fill="#0f766e" stroke="#ffffff" stroke-width="1.5"/>
+                    <!-- LED Route Sign -->
+                    <rect x="25" y="11" width="30" height="4.5" rx="1.5" fill="#0f172a"/>
+                    <text x="40" y="14.5" fill="#fde047" font-size="3.2" font-weight="bold" font-family="monospace" text-anchor="middle">LÍNEA ${letra} · N.CALIF</text>
+                    <!-- Windshield -->
+                    <rect x="24" y="17" width="32" height="11" rx="2.5" fill="#38bdf8"/>
+                    <line x1="28" y1="27" x2="36" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                    <!-- Body Teal Trim -->
+                    <line x1="21" y1="30" x2="59" y2="30" stroke="#2dd4bf" stroke-width="1"/>
+                    <!-- Line Emblem -->
+                    <circle cx="40" cy="34" r="2.8" fill="#ffffff"/>
+                    <text x="40" y="35.2" fill="#0f766e" font-size="3.5" font-weight="bold" text-anchor="middle">${letra}</text>
+                    <!-- Headlights -->
+                    <circle cx="27" cy="34" r="2.2" fill="#fef08a" stroke="#ffffff" stroke-width="0.6"/>
+                    <circle cx="53" cy="34" r="2.2" fill="#fef08a" stroke="#ffffff" stroke-width="0.6"/>
+                    <!-- Bumper -->
+                    <rect x="23" y="38.5" width="34" height="3.5" rx="1" fill="#0f172a"/>
+                    <rect x="33" y="39.5" width="14" height="2" rx="0.5" fill="#ffffff"/>
+                    <text x="40" y="41" fill="#0f172a" font-size="2" font-weight="bold" font-family="monospace" text-anchor="middle">${placa}</text>
+                </svg>
+            </div>`,
+            iconSize: [80, 68],
+            iconAnchor: [40, 58]
+        });
+    }
+
+    function passengerIcon() {
+        return L.divIcon({
+            className: "",
+            html: `<div style="width:28px;height:28px;border-radius:50%;background:#0f766e;border:2px solid #fff;
+                    display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;
+                    box-shadow:0 3px 8px rgba(0,0,0,.3);"><i class="bi bi-person-fill"></i></div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+    }
+
+    const busMarkers = {};
+    const passengerMarkers = {};
+    let fitted = false;
+
+    function syncMarkers(store, items, keyFn, latFn, lngFn, iconFn, popupFn) {
+        const seen = new Set();
+        items.forEach((it) => {
+            const lat = latFn(it), lng = lngFn(it);
+            if (typeof lat !== "number" || typeof lng !== "number") return;
+            const key = keyFn(it);
+            seen.add(key);
+            if (store[key]) {
+                store[key].setLatLng([lat, lng]).setIcon(iconFn(it)).setPopupContent(popupFn(it));
+            } else {
+                store[key] = L.marker([lat, lng], { icon: iconFn(it), zIndexOffset: 500 }).addTo(map).bindPopup(popupFn(it));
+            }
+        });
+        Object.keys(store).forEach((k) => {
+            if (!seen.has(k)) {
+                map.removeLayer(store[k]);
+                delete store[k];
+            }
+        });
+    }
+
+    function renderUnit(positions) {
+        const el = document.getElementById("unit-detail");
+        if (!el) return;
+        if (!positions.length) {
+            el.innerHTML = `<div class="empty-state"><i class="bi bi-broadcast"></i>Ninguna unidad transmitiendo.<br>Inicia una vuelta desde la app del conductor.</div>`;
+            return;
+        }
+        const b = positions[0];
+        const ocupColor = b.ocupacion === 'LLENO' ? 'danger' : (b.ocupacion === 'DE_PIE' ? 'warning' : 'success');
+        const ocupIcon = b.ocupacion === 'LLENO' ? '🔴' : (b.ocupacion === 'DE_PIE' ? '🟡' : '🟢');
+        el.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="status-dot on"></span>
+                    <span class="fw-semibold">${esc(b.placa)}</span>
+                    <span class="text-secondary small">· Línea ${esc(b.letra)} · ${esc(b.sentido)}</span>
+                </div>
+                <span class="badge text-bg-${ocupColor}">${ocupIcon} ${esc(b.ocupacionLabel || 'Asientos libres')}</span>
+            </div>
+            <dl class="unit-detail row mb-2">
+                <div class="col-12"><dt>Conductor</dt><dd>${esc(b.conductorNombre)}</dd></div>
+                <div class="col-6"><dt>Velocidad</dt><dd class="font-mono-tech">${esc(b.velocidadKmh)} km/h</dd></div>
+                <div class="col-6"><dt>Próximo paradero</dt><dd>${esc(b.proximoParadero)}</dd></div>
+                <div class="col-12"><dt>Coordenadas</dt><dd class="font-mono-tech fw-normal small">${Number(b.lat).toFixed(5)}, ${Number(b.lng).toFixed(5)}</dd></div>
+            </dl>
+            <div class="d-flex gap-2">
+                <a href="/viaje-seguro/${encodeURIComponent(b.placa || 'T4A-812')}/" target="_blank" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-shield-check text-success me-1"></i> Link Viaje Seguro
+                </a>
+            </div>`;
+    }
+
+    function renderPassengers(passengers) {
+        const el = document.getElementById("passenger-list");
+        const countBadge = document.getElementById("badge-count-passengers");
+        if (countBadge) countBadge.textContent = passengers.length;
+        if (!el) return;
+        if (!passengers.length) {
+            el.innerHTML = `<div class="empty-state"><i class="bi bi-person"></i>No hay pasajeros esperando.</div>`;
+            return;
+        }
+        el.innerHTML = passengers.map((p) => `
+            <div class="passenger-row">
+                <span><i class="bi bi-person text-secondary me-1"></i>${esc(p.nombre)}</span>
+                <span class="text-secondary small">${esc(p.paraderoCercano)}</span>
+            </div>`).join("");
+    }
+
+    function render(positions, passengers) {
+        positions = positions || [];
+        passengers = passengers || [];
+
+        syncMarkers(busMarkers, positions, (b) => String(b.viajeId || b.placa), (b) => b.lat, (b) => b.lng, busIcon,
+            (b) => `<strong>🚌 ${esc(b.placa)}</strong><br>${esc(b.conductorNombre)}<br><span class="text-secondary">${esc(b.velocidadKmh)} km/h · ${esc(b.proximoParadero)}</span>`);
+        syncMarkers(passengerMarkers, passengers, (p) => p.pasajeroKey, (p) => p.latitud, (p) => p.longitud, passengerIcon,
+            (p) => `<strong>🙋 ${esc(p.nombre)}</strong><br><span class="text-secondary">${esc(p.paraderoCercano)}</span>`);
+
+        const pts = positions.map((b) => [b.lat, b.lng]).concat(passengers.map((p) => [p.latitud, p.longitud]));
+        if (!fitted && pts.length) {
+            map.fitBounds(pts, { padding: [50, 50], maxZoom: 16 });
+            fitted = true;
+        }
+
+        const busKpi = document.getElementById("kpi-live-buses");
+        if (busKpi) busKpi.textContent = positions.length;
+
+        const passKpi = document.getElementById("kpi-waiting-passengers");
+        if (passKpi) passKpi.textContent = passengers.reduce((s, p) => s + (p.cantidad || 1), 0);
+
+        renderUnit(positions);
+        renderPassengers(passengers);
+    }
+
+    // Carga inicial
+    render(
+        JSON.parse(document.getElementById("dashboard-initial-positions").textContent || "[]"),
+        JSON.parse(document.getElementById("dashboard-initial-passengers").textContent || "[]")
+    );
+
+    // Polling en vivo cada 3 segundos
+    async function poll() {
+        try {
+            const resp = await fetch("/api/en-vivo/", { headers: { Accept: "application/json" } });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            window.ncSetApiStatus(data.api_online);
+            render(data.posiciones, data.pasajeros);
+            if (typeof data.open_incidents === "number") {
+                const incKpi = document.getElementById("kpi-open-incidents");
+                if (incKpi) incKpi.textContent = data.open_incidents;
+            }
+        } catch (e) {
+            window.ncSetApiStatus(false);
+        }
+    }
+    setInterval(poll, 3000);
+})();
+</script>
 {% endblock %}

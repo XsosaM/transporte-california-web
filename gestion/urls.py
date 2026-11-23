@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("", views.dashboard_view, name="dashboard"),
+    path("api/en-vivo/", views.live_api_state, name="live_api_state"),
     path("flota/", views.fleet_list, name="fleet_list"),
     path("flota/nueva/", views.fleet_create, name="fleet_create"),
     path("flota/<int:pk>/editar/", views.fleet_edit, name="fleet_edit"),
@@ -49,4 +50,10 @@ urlpatterns = [
     ),
     path("reportes/", views.reports_view, name="reports"),
     path("reportes/despachos.csv", views.export_report, name="export_report"),
+    path("viaje-seguro/", views.viaje_seguro_view, name="viaje_seguro_index"),
+    path("viaje-seguro/<str:placa>/", views.viaje_seguro_view, name="viaje_seguro"),
+    path("bot-whatsapp/", views.whatsapp_bot_view, name="whatsapp_bot"),
+    path("api/whatsapp-consulta/", views.whatsapp_consulta_api, name="whatsapp_consulta_api"),
+    path("api/ocupacion/", views.actualizar_ocupacion_view, name="actualizar_ocupacion_api"),
+    path("api/paraderos-seguros/", views.paraderos_seguros_api, name="paraderos_seguros_api"),
 ]

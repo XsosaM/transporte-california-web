@@ -1,97 +1,419 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
 
-{% block title %}Reportes{% endblock %}
+{% block title %}Rentabilidad, Heatmap y Auditoría · Nuevo California{% endblock %}
+{% block page_title %}Rentabilidad, Analítica B2B y Seguridad Vial{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+    #b2b-heatmap {
+        height: 410px;
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid var(--nc-border);
+        background: #e2e8f0;
+    }
+    .kpi-fin-card {
+        border-left: 4px solid var(--nc-accent);
+    }
+    .kpi-fin-card.warn { border-left-color: #d97706; }
+    .kpi-fin-card.danger { border-left-color: #dc2626; }
+    .kpi-fin-card.profit { border-left-color: #059669; }
+</style>
+{% endblock %}
+
+{% block page_actions %}
+<a class="btn btn-outline-secondary btn-sm" href="{% url 'whatsapp_bot' %}">
+    <i class="bi bi-whatsapp text-success me-1"></i> Bot WhatsApp
+</a>
+<a class="btn btn-success btn-sm" href="{% url 'export_report' %}">
+    <i class="bi bi-download me-1"></i> Exportar Despachos CSV
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div>
-        <h1 class="page-title">Reportes</h1>
-        <p class="page-subtitle">Indicadores del mes de {{ report_date|date:"F Y" }} y exportación de despachos.</p>
-    </div>
-    <a class="btn btn-success" href="{% url 'export_report' %}"><i class="bi bi-download me-1"></i>Exportar despachos CSV</a>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-arrow-repeat"></i></span>
-            <div class="metric-value">{{ dispatches_month }}</div>
-            <div class="metric-label">Vueltas registradas este mes</div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
-            <div class="metric-value">{{ completed_month }}</div>
-            <div class="metric-label">Vueltas completadas</div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-person-check"></i></span>
-            <div class="metric-value">{{ drivers_available }}</div>
-            <div class="metric-label">Conductores habilitados</div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card metric-card p-3 h-100">
-            <span class="metric-icon"><i class="bi bi-exclamation-triangle"></i></span>
-            <div class="metric-value">{{ incidents_open }}</div>
-            <div class="metric-label">Incidencias pendientes</div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3">
-    <div class="col-lg-7">
-        <section class="card h-100">
-            <div class="card-header px-4 py-3">
-                <h2 class="h6 fw-bold mb-0">Actividad por ruta</h2>
-                <small class="muted">Turnos programados durante el mes</small>
+<!-- 1. KPIs Financieros y de Rentabilidad B2B (100% Gratuito) -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="panel-card kpi-fin-card profit p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Recaudación Bruta Est.</div>
+                    <div class="metric-value mt-1" style="font-size:1.45rem;">S/ {{ total_recaudacion_est }}</div>
+                    <div class="small text-success fw-medium mt-1"><i class="bi bi-graph-up-arrow"></i> Tarifa urbana S/ 1.50</div>
+                </div>
+                <span class="metric-icon text-success"><i class="bi bi-cash-stack"></i></span>
             </div>
-            {% if route_usage %}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead><tr><th>Ruta</th><th>Origen y destino</th><th class="text-end">Turnos</th></tr></thead>
-                    <tbody>
-                        {% for route in route_usage %}
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="panel-card kpi-fin-card warn p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Gasto Combustible Real</div>
+                    <div class="metric-value mt-1" style="font-size:1.45rem;">S/ {{ total_gasto_combustible }}</div>
+                    <div class="small text-secondary mt-1">Auditado por GPS vs. Ralentí</div>
+                </div>
+                <span class="metric-icon text-warning"><i class="bi bi-fuel-pump"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="panel-card kpi-fin-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Utilidad Operativa Neta</div>
+                    <div class="metric-value mt-1 text-success" style="font-size:1.45rem;">S/ {{ total_utilidad_neta }}</div>
+                    <div class="small text-secondary mt-1">Margen descontando combustible</div>
+                </div>
+                <span class="metric-icon"><i class="bi bi-wallet2"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="panel-card kpi-fin-card danger p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Demanda No Captada</div>
+                    <div class="metric-value mt-1 text-danger" style="font-size:1.45rem;">S/ {{ total_ingreso_perdido }}</div>
+                    <div class="small text-danger mt-1"><i class="bi bi-exclamation-circle"></i> Por espera &gt; 10 min en paraderos</div>
+                </div>
+                <span class="metric-icon text-danger"><i class="bi bi-people-fill"></i></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Mapa de Calor de Demanda Perdida + Paraderos Seguros e Iluminados -->
+<div class="row g-3 mb-3">
+    <div class="col-xl-7">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <div>
+                    <h2 class="panel-title">Mapa de Calor: Demanda Perdida y Paraderos Seguros (Trujillo)</h2>
+                    <p class="panel-subtitle">Círculos rojos indican demanda insatisfecha; escudos verdes muestran paraderos iluminados con serenazgo.</p>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" id="btn-layer-all">Todo</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-layer-heat">Calor Demanda</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-layer-safe">Paraderos Seguros</button>
+                </div>
+            </div>
+            <div id="b2b-heatmap"></div>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="panel-card p-3 h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <h2 class="panel-title">Zonas de Demanda Insatisfecha</h2>
+                    <p class="panel-subtitle">Detección de pasajeros esperando y oportunidades de despacho</p>
+                </div>
+                <span class="badge text-bg-danger">Tiempo Real</span>
+            </div>
+            <div class="table-responsive flex-grow-1">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
                         <tr>
-                            <td><span class="badge text-bg-light border">{{ route.code }}</span> {{ route.name }}</td>
-                            <td>{{ route.origin|default:"—" }} → {{ route.destination|default:"—" }}</td>
-                            <td class="text-end fw-semibold">{{ route.shift_count }}</td>
+                            <th>Zona / Paradero</th>
+                            <th>Espera</th>
+                            <th>Perdidos</th>
+                            <th>Sugerencia IA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for z in heatmap_zones %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ z.zona }}</div>
+                                <div class="small text-secondary">{{ z.solicitudes_hora }} solic./h</div>
+                            </td>
+                            <td class="font-mono-tech">
+                                {% if z.nivel == 'CRITICO' %}
+                                    <span class="badge text-bg-danger">{{ z.espera_prom_min }} min</span>
+                                {% elif z.nivel == 'ALTO' %}
+                                    <span class="badge text-bg-warning">{{ z.espera_prom_min }} min</span>
+                                {% elif z.nivel == 'EN_VIVO' %}
+                                    <span class="badge text-bg-info">En vivo</span>
+                                {% else %}
+                                    <span class="badge text-bg-success">{{ z.espera_prom_min }} min</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-mono-tech fw-semibold text-danger">
+                                {% if z.demanda_perdida_pasajeros > 0 %}
+                                    -{{ z.demanda_perdida_pasajeros }} pas. (S/ {{ z.ingreso_no_captado|floatformat:2 }})
+                                {% else %}
+                                    0 pas.
+                                {% endif %}
+                            </td>
+                            <td class="small text-secondary">{{ z.accion_sugerida }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            {% else %}
-            <div class="empty-state">No hay rutas registradas.</div>
-            {% endif %}
-        </section>
-    </div>
-    <div class="col-lg-5">
-        <section class="card h-100">
-            <div class="card-header px-4 py-3">
-                <h2 class="h6 fw-bold mb-0">Estado de la flota</h2>
-                <small class="muted">Unidades agrupadas por estado</small>
-            </div>
-            <div class="list-group list-group-flush">
-                {% for item in vehicle_status %}
-                <div class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
-                    <span>{% if item.status == "active" %}Activa{% elif item.status == "maintenance" %}En mantenimiento{% else %}Inactiva{% endif %}</span>
-                    <span class="badge rounded-pill text-bg-light border text-dark">{{ item.total }}</span>
-                </div>
-                {% empty %}
-                <div class="empty-state">No hay unidades registradas.</div>
-                {% endfor %}
-            </div>
-            <div class="card-body border-top">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="small muted">Licencias vencidas o por vencer</span>
-                    <span class="badge {% if drivers_expiring %}text-bg-warning{% else %}text-bg-success{% endif %}">{{ drivers_expiring }}</span>
-                </div>
-            </div>
-        </section>
+        </div>
     </div>
 </div>
+
+<!-- 3. Auditoría de Combustible Teórico vs. Real y Rentabilidad por Unidad -->
+<div class="panel-card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="panel-title"><i class="bi bi-fuel-pump-diesel text-teal me-1"></i> Auditoría de Combustible Teórico vs. Real y Rentabilidad por Unidad</h2>
+            <p class="panel-subtitle">Cálculo automático basado en telemetría GPS de kilómetros recorridos, tiempo en ralentí por tráfico y boletaje estimado.</p>
+        </div>
+        <span class="badge text-bg-success">Rendimiento base: 11.5 km/gal · Diésel S/ 15.80/gal</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Unidad (Placa / Padrón)</th>
+                    <th>Vueltas</th>
+                    <th>Distancia GPS</th>
+                    <th>Comb. Teórico</th>
+                    <th>Comb. Real</th>
+                    <th>Desviación</th>
+                    <th>Gasto Combustible</th>
+                    <th>Pasajeros Est.</th>
+                    <th>Recaudación Bruta</th>
+                    <th>Utilidad Neta</th>
+                    <th>Diagnóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in fuel_audit_rows %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold text-dark">{{ row.placa }} <span class="badge text-bg-secondary ms-1">Padrón {{ row.padron }}</span></div>
+                        <div class="small text-secondary">{{ row.modelo }}</div>
+                    </td>
+                    <td class="font-mono-tech fw-semibold">{{ row.vueltas }}</td>
+                    <td class="font-mono-tech">{{ row.km_recorridos }} km</td>
+                    <td class="font-mono-tech">{{ row.galones_teoricos }} gal</td>
+                    <td class="font-mono-tech fw-semibold">{{ row.galones_reales }} gal</td>
+                    <td class="font-mono-tech">
+                        <span class="text-{% if row.desviacion_pct > 10 %}warning{% else %}success{% endif %} fw-semibold">+{{ row.desviacion_pct }}%</span>
+                    </td>
+                    <td class="font-mono-tech text-danger fw-medium">S/ {{ row.costo_combustible }}</td>
+                    <td class="font-mono-tech">{{ row.pasajeros_estimados }} pas.</td>
+                    <td class="font-mono-tech fw-semibold">S/ {{ row.recaudacion_bruta }}</td>
+                    <td class="font-mono-tech fw-bold text-success">S/ {{ row.utilidad_neta }}</td>
+                    <td><span class="badge text-bg-{{ row.badge_class }}">{{ row.estado_eficiencia }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 4. Mapa Colaborativo de Paraderos Seguros e Iluminados + Cumplimiento Operativo -->
+<div class="row g-3">
+    <div class="col-xl-7">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="panel-title"><i class="bi bi-shield-fill-check text-success me-1"></i> Paraderos Seguros e Iluminados (Crowdsourcing Pasajeros)</h2>
+                    <p class="panel-subtitle">Calificación comunitaria en tiempo real de iluminación nocturna, serenazgo y comercios cercanos.</p>
+                </div>
+                <span class="badge text-bg-primary">{{ safe_stops|length }} paraderos auditados</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Paradero</th>
+                            <th>Atributos de Seguridad</th>
+                            <th>Calificación</th>
+                            <th>Nivel</th>
+                            <th>Recomendación al Pasajero</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in safe_stops %}
+                        <tr>
+                            <td class="fw-semibold text-dark">{{ s.nombre }}</td>
+                            <td>
+                                <span class="badge {% if s.iluminado %}text-bg-success{% else %}text-bg-secondary{% endif %} me-1">
+                                    <i class="bi bi-lightbulb-fill"></i> {% if s.iluminado %}Iluminado{% else %}Poca luz{% endif %}
+                                </span>
+                                <span class="badge {% if s.serenazgo %}text-bg-info{% else %}text-bg-secondary{% endif %} me-1">
+                                    <i class="bi bi-shield-check"></i> {% if s.serenazgo %}Serenazgo{% else %}Sin patrulla{% endif %}
+                                </span>
+                                <span class="badge {% if s.comerciosCerca %}text-bg-primary{% else %}text-bg-secondary{% endif %}">
+                                    <i class="bi bi-shop"></i> Comercios
+                                </span>
+                            </td>
+                            <td class="font-mono-tech fw-bold text-warning">
+                                ★ {{ s.calificacion }} <span class="text-secondary fw-normal small">({{ s.totalReportes }})</span>
+                            </td>
+                            <td>
+                                {% if s.nivelSeguridad == 'ALTO' %}
+                                    <span class="badge text-bg-success">SEGURO</span>
+                                {% elif s.nivelSeguridad == 'MEDIO' %}
+                                    <span class="badge text-bg-primary">MODERADO</span>
+                                {% else %}
+                                    <span class="badge text-bg-warning">PRECAUCIÓN</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-secondary">{{ s.recomendacion }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="panel-card p-3 h-100">
+            <h2 class="panel-title mb-3">Indicadores de Cumplimiento Operacional</h2>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small fw-semibold mb-1">
+                    <span>Cumplimiento de turnos ({{ completed_shifts }}/{{ total_shifts }})</span>
+                    <span>{{ shift_completion_rate }}%</span>
+                </div>
+                <div class="progress" style="height:7px;">
+                    <div class="progress-bar bg-success" style="width:{{ shift_completion_rate }}%"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small fw-semibold mb-1">
+                    <span>Cumplimiento de vueltas ({{ completed_dispatches }}/{{ total_dispatches }})</span>
+                    <span>{{ dispatch_completion_rate }}%</span>
+                </div>
+                <div class="progress" style="height:7px;">
+                    <div class="progress-bar bg-primary" style="width:{{ dispatch_completion_rate }}%"></div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="d-flex justify-content-between small fw-semibold mb-1">
+                    <span>Resolución de incidencias ({{ resolved_incidents }}/{{ total_incidents }})</span>
+                    <span>{{ incident_resolution_rate }}%</span>
+                </div>
+                <div class="progress" style="height:7px;">
+                    <div class="progress-bar bg-info" style="width:{{ incident_resolution_rate }}%"></div>
+                </div>
+            </div>
+
+            <h3 class="panel-title mb-2" style="font-size:0.9rem;">Resumen por Ruta Activa</h3>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ruta</th>
+                            <th>Nombre</th>
+                            <th>Paraderos</th>
+                            <th>Turnos</th>
+                            <th>Vueltas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for route in routes_summary %}
+                        <tr>
+                            <td>
+                                <span class="route-swatch" style="background:{{ route.color }};"></span>
+                                <span class="fw-semibold ms-1">{{ route.code }}</span>
+                            </td>
+                            <td class="small">{{ route.name }}</td>
+                            <td class="font-mono-tech">{{ route.stop_total }}</td>
+                            <td class="font-mono-tech">{{ route.shift_total }}</td>
+                            <td class="font-mono-tech">{{ route.dispatch_total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script>
+    if (typeof window.L === 'undefined') {
+        document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');
+    }
+</script>
+<script>
+(function() {
+    const heatZones = {{ heatmap_zones_json|safe }};
+    const safeStops = {{ safe_stops_json|safe }};
+
+    function initB2BMap() {
+        const el = document.getElementById('b2b-heatmap');
+        if (!el || typeof L === 'undefined') return;
+
+        const map = L.map(el).setView([-8.1116, -79.0335], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        const heatGroup = L.layerGroup().addTo(map);
+        const safeGroup = L.layerGroup().addTo(map);
+
+        heatZones.forEach(function(z) {
+            const color = z.nivel === 'CRITICO' ? '#dc2626' : (z.nivel === 'ALTO' ? '#d97706' : (z.nivel === 'EN_VIVO' ? '#7c3aed' : '#059669'));
+            const radius = Math.max(180, (z.solicitudes_hora || 20) * 8);
+            L.circle([z.lat, z.lng], {
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.28,
+                weight: 2,
+                radius: radius
+            }).bindPopup(
+                '<strong>' + z.zona + '</strong><br>' +
+                'Solicitudes/hora: <b>' + z.solicitudes_hora + '</b><br>' +
+                'Espera prom.: <b>' + z.espera_prom_min + ' min</b><br>' +
+                'Acción IA: ' + z.accion_sugerida
+            ).addTo(heatGroup);
+        });
+
+        safeStops.forEach(function(s) {
+            const shieldHtml = '<div style="background:#059669;color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.3);font-size:13px;">🛡️</div>';
+            const icon = L.divIcon({ html: shieldHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+            L.marker([s.lat, s.lng], { icon: icon }).bindPopup(
+                '<strong>🛡️ ' + s.nombre + ' (★ ' + s.calificacion + ')</strong><br>' +
+                (s.iluminado ? '💡 Iluminado LED · ' : '⚠️ Poca luz · ') +
+                (s.serenazgo ? '👮 Serenazgo activo' : '🏪 Comercios cerca') + '<br>' +
+                '<small>' + s.recomendacion + '</small>'
+            ).addTo(safeGroup);
+        });
+
+        document.getElementById('btn-layer-all').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('btn-layer-heat').classList.remove('active');
+            document.getElementById('btn-layer-safe').classList.remove('active');
+            map.addLayer(heatGroup);
+            map.addLayer(safeGroup);
+        });
+        document.getElementById('btn-layer-heat').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('btn-layer-all').classList.remove('active');
+            document.getElementById('btn-layer-safe').classList.remove('active');
+            map.addLayer(heatGroup);
+            map.removeLayer(safeGroup);
+        });
+        document.getElementById('btn-layer-safe').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('btn-layer-all').classList.remove('active');
+            document.getElementById('btn-layer-heat').classList.remove('active');
+            map.removeLayer(heatGroup);
+            map.addLayer(safeGroup);
+        });
+
+        setTimeout(function() { map.invalidateSize(); }, 250);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initB2BMap);
+    } else {
+        initB2BMap();
+    }
+})();
+</script>
 {% endblock %}

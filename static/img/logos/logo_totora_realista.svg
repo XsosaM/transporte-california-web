@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradiente del cielo costero al atardecer en Huanchaco -->
+    <linearGradient id="huanchaco-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="45%" stop-color="#1E293B"/>
+      <stop offset="75%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#064E3B"/>
+    </linearGradient>
+
+    <!-- Gradiente de totora seca auténtica (Schoenoplectus californicus) -->
+    <linearGradient id="totora-reed-main" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="35%" stop-color="#F59E0B"/>
+      <stop offset="70%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+
+    <linearGradient id="totora-reed-top" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <!-- Olas del Pacífico en Huanchaco -->
+    <linearGradient id="pacific-wave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="50%" stop-color="#0D9488"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    
+    <filter id="shadow-drop" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Fondo squircle elegante para app icon -->
+  <rect width="512" height="512" rx="115" fill="url(#huanchaco-sky)"/>
+
+  <!-- Brillo sutil del sol de la costa norte -->
+  <circle cx="360" cy="130" r="60" fill="#FDE68A" opacity="0.15"/>
+  <circle cx="360" cy="130" r="30" fill="#FEF3C7" opacity="0.25"/>
+
+  <!-- Pin de ruta inteligente en el horizonte (conecta con la app) -->
+  <g transform="translate(345, 105)" opacity="0.9">
+    <path d="M15 0 C6.7 0 0 6.7 0 15 C0 26 15 42 15 42 C15 42 30 26 30 15 C30 6.7 23.3 0 15 0 Z" fill="#10B981"/>
+    <circle cx="15" cy="15" r="6" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Oleaje de Huanchaco (Corte de ola inferior) -->
+  <g opacity="0.85">
+    <!-- Ola de fondo -->
+    <path d="M 40 410 C 110 390, 160 430, 240 405 C 320 380, 390 415, 472 395 L 472 450 L 40 450 Z" fill="#0369A1" opacity="0.6"/>
+    <!-- Ola principal -->
+    <path d="M 40 430 C 120 395, 180 440, 260 415 C 340 390, 400 425, 472 405 L 472 472 C 472 490, 458 500, 440 500 L 72 500 C 54 500, 40 490, 40 472 Z" fill="url(#pacific-wave)"/>
+    <!-- Cresta de espuma blanca -->
+    <path d="M 120 395 C 135 390, 155 395, 170 410" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.8"/>
+    <path d="M 270 410 C 290 400, 315 400, 335 410" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.9"/>
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- CABALLITO DE TOTORA REALISTA (ANATOMÍA FIDEDIGNA DE HUANCHACO) -->
+  <!-- ======================================================== -->
+  <g filter="url(#shadow-drop)">
+
+    <!-- CUERPO BASE / MADRE INFERIOR (Haz grueso de totora) -->
+    <!-- Proa: afilada y curvada hacia arriba con ángulo pronunciado -->
+    <!-- Popa: ancha, truncada en bisel donde se sienta el pescador -->
+    <path d="M 115 155 
+             C 125 185, 150 255, 190 310 
+             C 230 355, 290 385, 395 385 
+             C 415 385, 435 380, 445 370 
+             C 440 350, 425 330, 390 330 
+             C 320 330, 260 305, 215 255 
+             C 175 210, 150 160, 130 140 
+             C 120 130, 112 135, 115 155 Z" 
+          fill="url(#totora-reed-main)" stroke="#78350F" stroke-width="2"/>
+
+    <!-- CUERPO SUPERIOR / HIJOS (Los dos haces superiores que forman la cavidad) -->
+    <path d="M 126 142 
+             C 140 180, 170 240, 215 285 
+             C 260 330, 320 345, 395 345 
+             C 415 345, 430 338, 435 325 
+             C 410 310, 370 300, 330 300 
+             C 270 300, 215 260, 175 205 
+             C 150 170, 138 145, 130 138 
+             Z" 
+          fill="url(#totora-reed-top)" opacity="0.95"/>
+
+    <!-- PUNTA FIBROSA DE LA PROA (Deshilachado natural de las puntas de junco) -->
+    <path d="M 113 135 L 105 120 M 116 132 L 112 115 M 121 135 L 122 118 M 126 138 L 132 122" 
+          stroke="#B45309" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- LÍNEAS LONGITUDINALES DE LAS FIBRAS DE TOTORA (Textura de caña natural) -->
+    <g stroke="#92400E" stroke-width="1.2" opacity="0.6" fill="none">
+      <path d="M 122 155 C 145 220, 195 295, 275 345 C 320 365, 370 375, 420 375"/>
+      <path d="M 132 165 C 158 230, 205 290, 290 335 C 335 352, 380 360, 415 360"/>
+      <path d="M 145 185 C 175 245, 225 295, 305 325 C 345 335, 385 338, 410 335"/>
+      <path d="M 160 205 C 190 260, 240 295, 315 315"/>
+    </g>
+
+    <!-- AMARRES TRADICIONALES DE SOGA (HUANGOS / FAJAS DE ATADURA TRANSVERSAL) -->
+    <!-- Cada amarre ciñe el cuerpo cónico en secciones reales -->
+    <g stroke="#451A03" stroke-width="4.5" stroke-linecap="round" fill="none">
+      <!-- Faja 1 (Proa alta) -->
+      <path d="M 122 170 C 128 172, 136 166, 142 160"/>
+      <!-- Faja 2 -->
+      <path d="M 137 205 C 146 208, 156 200, 164 192"/>
+      <!-- Faja 3 -->
+      <path d="M 158 245 C 170 248, 184 238, 194 228"/>
+      <!-- Faja 4 (Entrando al vientre) -->
+      <path d="M 188 285 C 203 290, 220 278, 232 264"/>
+      <!-- Faja 5 (Centro) -->
+      <path d="M 230 325 C 248 330, 268 316, 280 300"/>
+      <!-- Faja 6 (Popa / Asiento) -->
+      <path d="M 285 355 C 305 360, 328 345, 340 330"/>
+      <!-- Faja 7 (Popa trasera) -->
+      <path d="M 350 375 C 370 378, 390 365, 400 350"/>
+      <!-- Faja 8 (Extremo de popa) -->
+      <path d="M 410 378 C 422 376, 432 368, 436 358"/>
+    </g>
+
+    <!-- Sombras de los nudos de soga -->
+    <g fill="#271003">
+      <circle cx="123" cy="170" r="3.5"/>
+      <circle cx="138" cy="205" r="3.5"/>
+      <circle cx="159" cy="245" r="4"/>
+      <circle cx="189" cy="285" r="4"/>
+      <circle cx="231" cy="325" r="4.5"/>
+      <circle cx="286" cy="355" r="4.5"/>
+      <circle cx="351" cy="375" r="4"/>
+    </g>
+
+    <!-- REMO TRADICIONAL DE CAÑA DE GUAYAQUIL (QUIÑA / CHALANA) -->
+    <!-- Palo largo de caña partida que cruza la embarcación -->
+    <g>
+      <!-- Sombra del remo sobre el caballito -->
+      <path d="M 185 365 L 340 195" stroke="#1F2937" stroke-width="8" opacity="0.4" stroke-linecap="round"/>
+      <!-- Vara de caña -->
+      <line x1="175" y1="375" x2="335" y2="195" stroke="#FEF08A" stroke-width="6" stroke-linecap="round"/>
+      <line x1="175" y1="375" x2="335" y2="195" stroke="#CA8A04" stroke-width="2" stroke-linecap="round"/>
+      <!-- Pala inferior sumergida -->
+      <path d="M 160 395 C 155 385, 170 375, 185 365 L 170 400 Z" fill="#EAB308" stroke="#A16207" stroke-width="2"/>
+      <!-- Pala superior -->
+      <path d="M 325 205 L 345 180 C 352 173, 360 180, 355 190 L 335 215 Z" fill="#EAB308" stroke="#A16207" stroke-width="2"/>
+    </g>
+
+    <!-- CAVIDAD TRASERA PARA PESCA / PASAJE -->
+    <ellipse cx="370" cy="340" rx="28" ry="10" fill="#78350F" opacity="0.5"/>
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- INTEGRACIÓN DEL TRANSPORTE MODERNO (SOBRIA, LIMPIA Y ELEGANTE) -->
+  <!-- ======================================================== -->
+  <!-- Silueta sutil del autobús urbano de Nuevo California en vector minimalista -->
+  <g transform="translate(65, 80)">
+    <!-- Insignia "Ruta Trujillo / Huanchaco" -->
+    <rect x="0" y="0" width="136" height="34" rx="10" fill="#064E3B" stroke="#10B981" stroke-width="2"/>
+    <text x="68" y="22" fill="#2DD4BF" font-family="'Segoe UI', system-ui, sans-serif" font-size="12" font-weight="900" text-anchor="middle" letter-spacing="2">HUANCHACO</text>
+  </g>
+
+  <!-- Línea de ruta telemática que une la proa con el destino -->
+  <path d="M 115 130 C 130 90, 220 70, 345 125" fill="none" stroke="#2DD4BF" stroke-width="4" stroke-dasharray="6 6" opacity="0.8"/>
+  <circle cx="115" cy="130" r="5" fill="#2DD4BF"/>
+
+  <!-- Letrero inferior institucional -->
+  <text x="256" y="475" fill="#F8FAFC" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="800" text-anchor="middle" letter-spacing="4">
+    RUTA TRUJILLO
+  </text>
+</svg>

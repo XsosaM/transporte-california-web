@@ -1,93 +1,271 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
 
-{% block title %}Rutas y paraderos{% endblock %}
+{% block title %}Mapa y rutas · Nuevo California{% endblock %}
+{% block page_title %}Mapa y rutas{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>#route-map { height: 390px; border-radius: 0 0 13px 13px; z-index: 1; }</style>
+{% block extra_head %}
+<!-- Leaflet CSS: local con fallback -->
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+    #route-map { height: 520px; border-radius: 8px; border: 1px solid var(--nc-border); }
+    @media (max-width: 1199.98px) {
+        #route-map { height: 380px; }
+        .routes-scroll-box {
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+    }
+    .route-item {
+        display: block;
+        padding: 0.75rem 0.85rem;
+        border: 1px solid var(--nc-border);
+        border-radius: 8px;
+        color: inherit;
+        text-decoration: none;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .route-item:hover { border-color: #d1d5db; background: #f9fafb; color: inherit; }
+    .route-item.active { border-color: var(--nc-accent); background: var(--nc-accent-soft); }
+    .stop-seq {
+        width: 24px; height: 24px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.75rem; font-weight: 600; background: #f3f4f6; color: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block page_actions %}
+<a class="btn btn-outline-secondary btn-sm" href="{% url 'stops_create' %}"><i class="bi bi-plus"></i> Paradero</a>
+<a class="btn btn-success btn-sm" href="{% url 'routes_create' %}"><i class="bi bi-plus"></i> Nueva ruta</a>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div>
-        <h1 class="page-title">Rutas</h1>
-        <p class="page-subtitle">Administra las líneas y consulta sus paraderos georreferenciados.</p>
+<div class="row g-3">
+    <div class="col-xl-3">
+        <div class="panel-card p-3 h-100">
+            <h2 class="panel-title mb-1">Rutas</h2>
+            <p class="panel-subtitle mb-3">{{ routes|length }} registradas</p>
+            <div class="d-flex flex-column gap-2 routes-scroll-box">
+                {% for route in routes %}
+                    <a class="route-item {% if selected_route and selected_route.pk == route.pk %}active{% endif %}"
+                       href="{% url 'routes_list' %}?route={{ route.pk }}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="route-swatch" style="background-color: {{ route.color }};"></span>
+                                <span class="fw-semibold">{{ route.code }}</span>
+                            </div>
+                            <span class="badge {% if route.active %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ route.get_operational_status }}</span>
+                        </div>
+                        <div class="small text-secondary mt-1">{{ route.name }}</div>
+                        <div class="small text-secondary">{{ route.stops.count }} paraderos{% if route.distance_km %} · {{ route.distance_km }} km{% endif %}</div>
+                    </a>
+                {% empty %}
+                    <p class="text-secondary small mb-0">No hay rutas registradas.</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <a class="btn btn-outline-success" href="{% url 'stops_create' %}"><i class="bi bi-geo-alt me-1"></i>Nuevo paradero</a>
-        <a class="btn btn-success" href="{% url 'routes_create' %}"><i class="bi bi-plus-lg me-1"></i>Nueva ruta</a>
+
+    <div class="col-xl-9">
+        <div class="panel-card p-3 mb-3">
+            {% if selected_route %}
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <h2 class="panel-title">{{ selected_route.code }} · {{ selected_route.name }}</h2>
+                        <p class="panel-subtitle">{{ selected_route.origin|default:"—" }} → {{ selected_route.destination|default:"—" }}</p>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="small text-secondary" id="live-summary">—</span>
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'routes_edit' selected_route.pk %}"><i class="bi bi-pencil"></i> Editar</a>
+                    </div>
+                </div>
+                <div id="route-map"></div>
+            {% else %}
+                <p class="text-secondary mb-0">Selecciona o registra una ruta para visualizar el mapa.</p>
+            {% endif %}
+        </div>
+
+        {% if selected_route %}
+            <div class="panel-card">
+                <div class="d-flex justify-content-between align-items-center p-3">
+                    <h3 class="panel-title">Paraderos</h3>
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'stops_list' %}">Administrar</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead><tr><th>#</th><th>Paradero</th><th>Referencia</th><th>Coordenadas</th><th></th></tr></thead>
+                        <tbody>
+                            {% for stop in selected_route.stops.all %}
+                                <tr>
+                                    <td><span class="stop-seq">{{ stop.sequence }}</span></td>
+                                    <td class="fw-medium">{{ stop.name }}</td>
+                                    <td class="text-secondary">{{ stop.address|default:"—" }}</td>
+                                    <td class="font-mono-tech small text-secondary">{{ stop.coordinates_label }}</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'stops_edit' stop.pk %}"><i class="bi bi-pencil"></i></a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="5" class="text-secondary text-center py-4">Esta ruta aún no tiene paraderos.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 
-<div class="row g-3">
-    <div class="col-lg-4">
-        <section class="card h-100">
-            <div class="card-header px-4 py-3"><h2 class="h6 fw-bold mb-0">Líneas registradas <span class="badge text-bg-light border ms-1">{{ routes|length }}</span></h2></div>
-            {% if routes %}
-            <div class="list-group list-group-flush">
-                {% for route in routes %}
-                <div class="list-group-item px-4 py-3 {% if selected_route.pk == route.pk %}border-start border-3 border-success{% endif %}">
-                    <a href="?route={{ route.pk }}" class="d-block text-decoration-none">
-                    <div class="d-flex justify-content-between gap-2">
-                        <div>
-                            <div class="fw-bold text-dark">{{ route.code }} <span class="fw-normal">· {{ route.name }}</span></div>
-                            <small class="muted">{{ route.origin|default:"Origen sin definir" }} → {{ route.destination|default:"Destino sin definir" }}</small>
-                        </div>
-                        <span class="badge {% if route.active %}text-bg-success{% else %}text-bg-secondary{% endif %} align-self-start">{% if route.active %}Activa{% else %}Inactiva{% endif %}</span>
-                    </div>
-                    <small class="d-block muted mt-2">{{ route.stops.count }} paradero{{ route.stops.count|pluralize:"s" }}{% if route.distance_km %} · {{ route.distance_km }} km{% endif %}</small>
-                    </a>
-                    <div class="mt-2 d-flex gap-2">
-                        <a class="small text-decoration-none" href="{% url 'routes_edit' route.pk %}"><i class="bi bi-pencil me-1"></i>Editar</a>
-                        <a class="small text-danger text-decoration-none" href="{% url 'routes_delete' route.pk %}"><i class="bi bi-trash3 me-1"></i>Eliminar</a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state"><i class="bi bi-signpost-2 fs-3 d-block mb-2"></i>Aún no hay rutas.<br><a href="{% url 'routes_create' %}">Registra la ruta A o C</a></div>
-            {% endif %}
-        </section>
-    </div>
-    <div class="col-lg-8">
-        <section class="card overflow-hidden">
-            <div class="card-header bg-white px-4 py-3">
-                <h2 class="h6 fw-bold mb-0">{% if selected_route %}{{ selected_route.code }} · {{ selected_route.name }}{% else %}Mapa de rutas{% endif %}</h2>
-                <small class="muted">{% if selected_route %}{{ selected_route.origin|default:"" }}{% if selected_route.origin and selected_route.destination %} → {% endif %}{{ selected_route.destination|default:"" }}{% else %}Agrega una ruta para visualizar su recorrido{% endif %}</small>
-            </div>
-            <div id="route-map" role="img" aria-label="Mapa de la ruta y sus paraderos"></div>
-            {% if selected_route and not map_stops %}
-            <div class="px-4 py-3 small muted"><i class="bi bi-info-circle me-1"></i>Esta ruta aún no tiene paraderos con coordenadas. Agrégalos desde <a href="{% url 'stops_create' %}">Nuevo paradero</a> para dibujar el recorrido.</div>
-            {% endif %}
-        </section>
-    </div>
-</div>
 {{ map_stops|json_script:"route-stops-data" }}
-{% if selected_route %}{{ selected_route.color|json_script:"route-color-data" }}{% endif %}
+{{ live_positions|json_script:"live-positions-data" }}
+{{ live_passengers|json_script:"live-passengers-data" }}
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet JS: local con fallback -->
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
 <script>
-    const map = L.map("route-map").setView([-8.1116, -79.0286], 12);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-    const stops = JSON.parse(document.getElementById("route-stops-data").textContent);
-    if (stops.length) {
-        const points = stops.map(stop => [stop.latitude, stop.longitude]);
-        const routeColorElement = document.getElementById("route-color-data");
-        const routeColor = routeColorElement ? JSON.parse(routeColorElement.textContent) : "#147a55";
-        L.polyline(points, { color: routeColor, weight: 4, opacity: 0.8 }).addTo(map);
-        stops.forEach(stop => {
-            const popup = document.createElement("span");
-            popup.textContent = `${stop.sequence}. ${stop.name}`;
-            L.marker([stop.latitude, stop.longitude])
-                .addTo(map)
-                .bindPopup(popup);
-        });
-        map.fitBounds(points, { padding: [28, 28], maxZoom: 15 });
+    if (typeof L === 'undefined') {
+        document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\\/script>');
     }
+</script>
+<script>
+(function () {
+    const mapEl = document.getElementById("route-map");
+    if (!mapEl) return;
+
+    const stops = JSON.parse(document.getElementById("route-stops-data").textContent || "[]");
+    const routeColor = "{{ selected_route.color|default:'#0f766e'|escapejs }}";
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+    const map = L.map(mapEl, {
+        center: [-8.1116, -79.0287],
+        zoom: 13,
+        zoomControl: true
+    });
+
+    // Capa base: Google Maps Roadmap
+    const googleRoads = L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+        maxZoom: 20,
+        attribution: "&copy; Google Maps"
+    }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 200);
+    window.addEventListener("resize", () => map.invalidateSize());
+
+    if (stops.length) {
+        const latLngs = stops.map((s) => [s.latitude, s.longitude]);
+        const line = L.polyline(latLngs, { color: routeColor, weight: 4, opacity: 0.8 }).addTo(map);
+        stops.forEach((s) => {
+            L.circleMarker([s.latitude, s.longitude], {
+                radius: 5, color: "#fff", weight: 2, fillColor: routeColor, fillOpacity: 1
+            }).addTo(map).bindPopup(`<strong>${s.sequence}. ${esc(s.name)}</strong>`);
+        });
+        map.fitBounds(line.getBounds(), { padding: [30, 30] });
+    }
+
+        function busIcon(bus) {
+        const letra = esc(bus.letra || 'A');
+        const placa = esc(bus.placa || 'T4A-812');
+        return L.divIcon({
+            className: "nc-2d-bus-marker",
+            html: `<div style="position:relative;width:80px;height:68px;cursor:pointer;filter:drop-shadow(0 4px 8px rgba(15,23,42,0.35));">
+                <!-- Floating HUD Pill -->
+                <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:#0f172a;color:#ffffff;
+                            border:1.5px solid #2dd4bf;border-radius:10px;padding:1px 6px;font-family:'Inter',sans-serif;
+                            font-weight:700;font-size:10px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:3;
+                            display:flex;align-items:center;gap:4px;">
+                    <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;"></span>
+                    <span>L-${letra} · ${placa}</span>
+                </div>
+                <!-- 2D Frontal Bus SVG -->
+                <svg width="80" height="48" viewBox="0 0 80 48" style="position:absolute;bottom:0;left:0;overflow:visible;">
+                    <ellipse cx="40" cy="45" rx="24" ry="3.5" fill="rgba(15,23,42,0.3)"/>
+                    <!-- Tires -->
+                    <rect x="18" y="35" width="6" height="8" rx="2" fill="#1e293b"/>
+                    <rect x="56" y="35" width="6" height="8" rx="2" fill="#1e293b"/>
+                    <!-- Mirrors -->
+                    <rect x="15" y="18" width="4" height="8" rx="1.5" fill="#0f766e"/>
+                    <rect x="15.5" y="19" width="2.5" height="6" rx="1" fill="#bae6fd"/>
+                    <rect x="61" y="18" width="4" height="8" rx="1.5" fill="#0f766e"/>
+                    <rect x="62" y="19" width="2.5" height="6" rx="1" fill="#bae6fd"/>
+                    <!-- Bus Body 2D Front -->
+                    <rect x="21" y="9" width="38" height="34" rx="6" fill="#0f766e" stroke="#ffffff" stroke-width="1.5"/>
+                    <!-- LED Route Sign -->
+                    <rect x="25" y="11" width="30" height="4.5" rx="1.5" fill="#0f172a"/>
+                    <text x="40" y="14.5" fill="#fde047" font-size="3.2" font-weight="bold" font-family="monospace" text-anchor="middle">LÍNEA ${letra} · N.CALIF</text>
+                    <!-- Windshield -->
+                    <rect x="24" y="17" width="32" height="11" rx="2.5" fill="#38bdf8"/>
+                    <line x1="28" y1="27" x2="36" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                    <!-- Body Teal Trim -->
+                    <line x1="21" y1="30" x2="59" y2="30" stroke="#2dd4bf" stroke-width="1"/>
+                    <!-- Line Emblem -->
+                    <circle cx="40" cy="34" r="2.8" fill="#ffffff"/>
+                    <text x="40" y="35.2" fill="#0f766e" font-size="3.5" font-weight="bold" text-anchor="middle">${letra}</text>
+                    <!-- Headlights -->
+                    <circle cx="27" cy="34" r="2.2" fill="#fef08a" stroke="#ffffff" stroke-width="0.6"/>
+                    <circle cx="53" cy="34" r="2.2" fill="#fef08a" stroke="#ffffff" stroke-width="0.6"/>
+                    <!-- Bumper -->
+                    <rect x="23" y="38.5" width="34" height="3.5" rx="1" fill="#0f172a"/>
+                    <rect x="33" y="39.5" width="14" height="2" rx="0.5" fill="#ffffff"/>
+                    <text x="40" y="41" fill="#0f172a" font-size="2" font-weight="bold" font-family="monospace" text-anchor="middle">${placa}</text>
+                </svg>
+            </div>`,
+            iconSize: [80, 68],
+            iconAnchor: [40, 58]
+        });
+    }
+    function passengerIcon() {
+        return L.divIcon({
+            className: "",
+            html: `<div style="width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid #0f766e;
+                    display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:13px;
+                    box-shadow:0 2px 6px rgba(0,0,0,.2);"><i class="bi bi-person-fill"></i></div>`,
+            iconSize: [26, 26], iconAnchor: [13, 13]
+        });
+    }
+
+    const buses = {}, passengers = {};
+    function sync(store, items, keyFn, latFn, lngFn, iconFn, popupFn) {
+        const seen = new Set();
+        items.forEach((it) => {
+            const lat = latFn(it), lng = lngFn(it);
+            if (typeof lat !== "number" || typeof lng !== "number") return;
+            const k = keyFn(it);
+            seen.add(k);
+            if (store[k]) store[k].setLatLng([lat, lng]).setIcon(iconFn(it)).setPopupContent(popupFn(it));
+            else store[k] = L.marker([lat, lng], { icon: iconFn(it), zIndexOffset: 500 }).addTo(map).bindPopup(popupFn(it));
+        });
+        Object.keys(store).forEach((k) => { if (!seen.has(k)) { map.removeLayer(store[k]); delete store[k]; } });
+    }
+
+    function render(pos, pas) {
+        pos = pos || []; pas = pas || [];
+        sync(buses, pos, (b) => String(b.viajeId || b.placa), (b) => b.lat, (b) => b.lng, busIcon,
+            (b) => `<strong>${esc(b.placa)}</strong><br>${esc(b.conductorNombre)}<br><span class="text-secondary">${esc(b.velocidadKmh)} km/h</span>`);
+        sync(passengers, pas, (p) => p.pasajeroKey, (p) => p.latitud, (p) => p.longitud, passengerIcon,
+            (p) => `<strong>${esc(p.nombre)}</strong><br><span class="text-secondary">${esc(p.paraderoCercano)}</span>`);
+        document.getElementById("live-summary").textContent =
+            `${pos.length} unidad(es) en ruta · ${pas.length} pasajero(s) esperando`;
+    }
+
+    render(
+        JSON.parse(document.getElementById("live-positions-data").textContent || "[]"),
+        JSON.parse(document.getElementById("live-passengers-data").textContent || "[]")
+    );
+
+    setInterval(async () => {
+        try {
+            const r = await fetch("{% url 'live_api_state' %}", { headers: { Accept: "application/json" } });
+            if (!r.ok) return;
+            const d = await r.json();
+            window.ncSetApiStatus(d.api_online);
+            render(d.posiciones, d.pasajeros);
+        } catch (e) { window.ncSetApiStatus(false); }
+    }, 3000);
+})();
 </script>
 {% endblock %}

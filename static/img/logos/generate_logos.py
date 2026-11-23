@@ -1,0 +1,522 @@
+import os
+
+svg_chimu = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="50%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#042F2E"/>
+    </linearGradient>
+    <linearGradient id="accent-grad-1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="115" fill="url(#bg-grad-1)"/>
+  
+  <!-- Chan Chan Geometric Wave Pattern (Adobe Murals) in Background -->
+  <g opacity="0.15" stroke="#FFFFFF" stroke-width="6" fill="none">
+    <path d="M 40 120 L 70 120 L 70 90 L 100 90 L 100 60 L 130 60 L 130 90 L 160 90 L 160 120 L 190 120" />
+    <path d="M 322 120 L 352 120 L 352 90 L 382 90 L 382 60 L 412 60 L 412 90 L 442 90 L 442 120 L 472 120" />
+    <path d="M 40 430 L 70 430 L 70 400 L 100 400 L 100 370 L 130 370 L 130 400 L 160 400 L 160 430 L 190 430" />
+    <path d="M 322 430 L 352 430 L 352 400 L 382 400 L 382 370 L 412 370 L 412 400 L 442 400 L 442 430 L 472 430" />
+  </g>
+
+  <!-- Pulse Rings -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#2DD4BF" stroke-width="2" opacity="0.2" stroke-dasharray="8 8"/>
+  <circle cx="256" cy="256" r="175" fill="none" stroke="#2DD4BF" stroke-width="3" opacity="0.4"/>
+
+  <!-- Main Chimu Stepped Fretwork Top Crown -->
+  <path d="M 196 140 L 226 140 L 226 115 L 286 115 L 286 140 L 316 140 L 316 165 L 196 165 Z" fill="url(#gold-grad)" filter="url(#glow)"/>
+
+  <!-- Bus Outer Shield Body -->
+  <rect x="136" y="160" width="240" height="230" rx="40" fill="#111827" stroke="url(#accent-grad-1)" stroke-width="8"/>
+  
+  <!-- Upper Route Screen / Led Sign -->
+  <rect x="176" y="182" width="160" height="32" rx="10" fill="#042F2E" stroke="#2DD4BF" stroke-width="2"/>
+  <text x="256" y="204" fill="#2DD4BF" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="900" text-anchor="middle" letter-spacing="3">TRUJILLO</text>
+
+  <!-- Windshield / Parabrisas Minimalista -->
+  <path d="M 156 230 C 156 225 160 220 166 220 L 346 220 C 352 220 356 225 356 230 L 356 288 C 356 295 350 300 344 300 L 168 300 C 162 300 156 295 156 288 Z" fill="url(#accent-grad-1)" opacity="0.9"/>
+  
+  <!-- Rearview Mirrors -->
+  <rect x="114" y="235" width="14" height="44" rx="7" fill="#2DD4BF"/>
+  <rect x="384" y="235" width="14" height="44" rx="7" fill="#2DD4BF"/>
+
+  <!-- Chimu Stepped Grill (Parrilla Chan Chan) -->
+  <g fill="#2DD4BF">
+    <rect x="206" y="322" width="100" height="6" rx="3"/>
+    <rect x="221" y="336" width="70" height="6" rx="3"/>
+    <rect x="236" y="350" width="40" height="6" rx="3"/>
+  </g>
+
+  <!-- High-tech LED Headlights -->
+  <circle cx="176" cy="336" r="16" fill="#0F172A" stroke="#F59E0B" stroke-width="4"/>
+  <circle cx="176" cy="336" r="8" fill="#FBBF24" filter="url(#glow)"/>
+  
+  <circle cx="336" cy="336" r="16" fill="#0F172A" stroke="#F59E0B" stroke-width="4"/>
+  <circle cx="336" cy="336" r="8" fill="#FBBF24" filter="url(#glow)"/>
+
+  <!-- Wheels / Bottom Suspension -->
+  <rect x="166" y="390" width="40" height="14" rx="5" fill="#042F2E"/>
+  <rect x="306" y="390" width="40" height="14" rx="5" fill="#042F2E"/>
+</svg>"""
+
+svg_totora = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="totora-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#092635"/>
+      <stop offset="100%" stop-color="#051923"/>
+    </linearGradient>
+    <linearGradient id="totora-gold" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </linearGradient>
+    <linearGradient id="ocean-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#totora-bg)"/>
+
+  <!-- Dynamic Waves of Huanchaco (Lineas de Ruta) -->
+  <path d="M 60 380 C 130 350, 190 410, 260 380 C 330 350, 390 400, 460 375" fill="none" stroke="#06B6D4" stroke-width="8" stroke-linecap="round" opacity="0.4"/>
+  <path d="M 90 420 C 160 390, 220 440, 290 410 C 360 380, 410 430, 450 415" fill="none" stroke="#10B981" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
+
+  <!-- GPS Halo Projection -->
+  <path d="M 140 370 C 170 310, 220 220, 256 120 C 270 170, 310 240, 360 330 C 320 310, 200 310, 140 370 Z" fill="url(#ocean-teal)" opacity="0.25"/>
+
+  <!-- Caballito de Totora Prow Silhouette (Curva milenaria alzada) -->
+  <path d="M 110 360 C 160 350, 210 320, 256 220 C 270 180, 275 130, 260 90 C 275 105, 305 145, 320 200 C 350 300, 395 340, 420 350 C 350 375, 180 385, 110 360 Z" fill="url(#totora-gold)" filter="url(#gold-glow)"/>
+
+  <!-- Modern Transit Icon embedded inside Totora Head -->
+  <g transform="translate(206, 175)">
+    <!-- Bus outline within GPS Core -->
+    <rect x="0" y="0" width="100" height="90" rx="22" fill="#0F172A" stroke="#FFFFFF" stroke-width="6"/>
+    <!-- Windshield -->
+    <path d="M 12 20 C 12 16 16 12 20 12 L 80 12 C 84 12 88 16 88 20 L 88 45 L 12 45 Z" fill="#2DD4BF"/>
+    <!-- Headlights -->
+    <circle cx="25" cy="65" r="8" fill="#FBBF24"/>
+    <circle cx="75" cy="65" r="8" fill="#FBBF24"/>
+    <!-- Grill -->
+    <line x1="42" y1="65" x2="58" y2="65" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- GPS Pointer Center Dot -->
+  <circle cx="256" cy="90" r="16" fill="#2DD4BF" filter="url(#gold-glow)"/>
+  <circle cx="256" cy="90" r="8" fill="#FFFFFF"/>
+
+  <!-- Traditional Reed Ribs -->
+  <line x1="210" y1="330" x2="225" y2="360" stroke="#78350F" stroke-width="4" stroke-linecap="round"/>
+  <line x1="245" y1="320" x2="255" y2="355" stroke="#78350F" stroke-width="4" stroke-linecap="round"/>
+  <line x1="280" y1="315" x2="285" y2="350" stroke="#78350F" stroke-width="4" stroke-linecap="round"/>
+  <line x1="315" y1="320" x2="315" y2="350" stroke="#78350F" stroke-width="4" stroke-linecap="round"/>
+</svg>"""
+
+svg_primavera = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="spring-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022C22"/>
+      <stop offset="50%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="petal-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="petal-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#0D9488"/>
+    </linearGradient>
+    <linearGradient id="sun-core" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#spring-bg)"/>
+
+  <!-- Orbital Highway Ring (Ovalo de la Av. Espana) -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#2DD4BF" stroke-width="12" stroke-dasharray="24 16" opacity="0.35"/>
+
+  <!-- 4 Petals arranged as cloverleaf interchange (Trebol vial primaveral) -->
+  <!-- Top Petal (Route North / La Esperanza) -->
+  <path d="M 256 256 C 210 170, 190 90, 256 70 C 322 90, 302 170, 256 256 Z" fill="url(#petal-1)" opacity="0.9"/>
+  <!-- Right Petal (Route East / Laredo - El Porvenir) -->
+  <path d="M 256 256 C 342 210, 422 190, 442 256 C 422 322, 342 302, 256 256 Z" fill="url(#petal-2)" opacity="0.9"/>
+  <!-- Bottom Petal (Route South / Victor Larco - Moche) -->
+  <path d="M 256 256 C 302 342, 322 422, 256 442 C 190 422, 210 342, 256 256 Z" fill="url(#petal-1)" opacity="0.9"/>
+  <!-- Left Petal (Route West / Huanchaco - Buenos Aires) -->
+  <path d="M 256 256 C 170 302, 90 322, 70 256 C 90 190, 170 210, 256 256 Z" fill="url(#petal-2)" opacity="0.9"/>
+
+  <!-- Moving Buses at North and South Nodes -->
+  <!-- North Bus -->
+  <g transform="translate(231, 80)">
+    <rect x="0" y="0" width="50" height="42" rx="12" fill="#FFFFFF" stroke="#064E3B" stroke-width="4"/>
+    <rect x="8" y="6" width="34" height="14" rx="4" fill="#10B981"/>
+    <circle cx="14" cy="30" r="5" fill="#F59E0B"/>
+    <circle cx="36" cy="30" r="5" fill="#F59E0B"/>
+  </g>
+
+  <!-- South Bus -->
+  <g transform="translate(231, 390)">
+    <rect x="0" y="0" width="50" height="42" rx="12" fill="#FFFFFF" stroke="#064E3B" stroke-width="4"/>
+    <rect x="8" y="22" width="34" height="14" rx="4" fill="#10B981"/>
+    <circle cx="14" cy="12" r="5" fill="#F59E0B"/>
+    <circle cx="36" cy="12" r="5" fill="#F59E0B"/>
+  </g>
+
+  <!-- Central Golden Sun / Rosa de los Vientos (Eterna Primavera) -->
+  <circle cx="256" cy="256" r="48" fill="url(#sun-core)" stroke="#FFFFFF" stroke-width="6"/>
+  <polygon points="256,220 266,246 292,256 266,266 256,292 246,266 220,256 246,246" fill="#78350F"/>
+  <circle cx="256" cy="256" r="6" fill="#FFFFFF"/>
+</svg>"""
+
+svg_marinera = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="marinera-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="ribbon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#6EE7B7"/>
+      <stop offset="80%" stop-color="#0D9488"/>
+      <stop offset="100%" stop-color="#042F2E"/>
+    </linearGradient>
+    <linearGradient id="gold-chalan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="ribbon-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#059669" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#marinera-bg)"/>
+
+  <!-- Dynamic Flying Handkerchief (Panuelo de Marinera transformado en Autopista 3D) -->
+  <path d="M 90 380 C 130 420, 210 440, 290 390 C 390 330, 440 240, 400 160 C 370 100, 270 90, 200 130 C 130 170, 110 260, 170 320 C 230 380, 330 360, 390 280" 
+        fill="none" stroke="url(#ribbon-grad)" stroke-width="36" stroke-linecap="round" filter="url(#ribbon-shadow)"/>
+
+  <!-- Asphalt Center Road Dashes inside Ribbon -->
+  <path d="M 90 380 C 130 420, 210 440, 290 390 C 390 330, 440 240, 400 160 C 370 100, 270 90, 200 130 C 130 170, 110 260, 170 320 C 230 380, 330 360, 390 280" 
+        fill="none" stroke="#0F172A" stroke-width="8" stroke-linecap="round" stroke-dasharray="14 18"/>
+
+  <!-- Bus Speeding on the Ribbon Curve -->
+  <g transform="translate(340, 120) rotate(35)">
+    <rect x="0" y="0" width="86" height="54" rx="16" fill="#10B981" stroke="#FFFFFF" stroke-width="4"/>
+    <rect x="10" y="10" width="44" height="34" rx="8" fill="#A7F3D0"/>
+    <circle cx="70" cy="18" r="7" fill="#FBBF24"/>
+    <circle cx="70" cy="36" r="7" fill="#FBBF24"/>
+    <rect x="-6" y="14" width="6" height="26" rx="3" fill="#042F2E"/>
+  </g>
+
+  <!-- Marinera Traditional Hat Pin (Sombrero de Chalan en el vertice) -->
+  <g transform="translate(130, 120)">
+    <ellipse cx="45" cy="35" rx="45" ry="20" fill="url(#gold-chalan)" stroke="#78350F" stroke-width="3"/>
+    <ellipse cx="45" cy="28" rx="24" ry="14" fill="#FBBF24" stroke="#78350F" stroke-width="3"/>
+    <path d="M 23 28 C 30 34, 60 34, 67 28" stroke="#991B1B" stroke-width="4" fill="none"/>
+  </g>
+
+  <!-- GPS Target Location Pin -->
+  <g transform="translate(365, 250)">
+    <circle cx="24" cy="24" r="24" fill="#EF4444" stroke="#FFFFFF" stroke-width="4"/>
+    <circle cx="24" cy="24" r="10" fill="#FFFFFF"/>
+  </g>
+</svg>"""
+
+svg_monograma = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mono-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#042F2E"/>
+      <stop offset="50%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="emerald-neon" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="cyan-pulse" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#2DD4BF"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#mono-bg)"/>
+
+  <!-- Satellite Signal Waves at Top Center -->
+  <path d="M 216 75 C 240 60, 272 60, 296 75" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 231 92 C 246 82, 266 82, 281 92" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="256" cy="105" r="7" fill="#F59E0B"/>
+
+  <!-- The Monogram 'T' (Trujillo / Transporte) fused with Bus Front & Highway -->
+  <path d="M 100 130 C 100 120, 110 110, 125 110 L 387 110 C 402 110, 412 120, 412 130 L 412 190 C 412 205, 400 215, 385 215 L 305 215 L 305 405 C 305 420, 295 430, 280 430 L 232 430 C 217 430, 207 420, 207 405 L 207 215 L 127 215 C 112 215, 100 205, 100 190 Z" 
+        fill="#0F172A" stroke="url(#emerald-neon)" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Bus Windshield in the Top Crossbar -->
+  <rect x="130" y="132" width="252" height="58" rx="14" fill="url(#cyan-pulse)" opacity="0.9"/>
+
+  <!-- LED Route Sign -->
+  <rect x="196" y="140" width="120" height="18" rx="6" fill="#042F2E"/>
+  <text x="256" y="154" fill="#34D399" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" font-weight="900" text-anchor="middle" letter-spacing="2">RUTA T-01</text>
+
+  <!-- Dual LED Projector Headlights on the Bus Shoulders -->
+  <circle cx="138" cy="195" r="10" fill="#FBBF24" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="374" cy="195" r="10" fill="#FBBF24" stroke="#FFFFFF" stroke-width="3"/>
+
+  <!-- Vertical Pillar of 'T' = Highway Avenue with Perspective Dashed Centerlines -->
+  <line x1="256" y1="230" x2="256" y2="270" stroke="#FBBF24" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="295" x2="256" y2="345" stroke="#FBBF24" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="370" x2="256" y2="415" stroke="#FBBF24" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Road Edge Guardrails -->
+  <line x1="220" y1="225" x2="220" y2="415" stroke="#2DD4BF" stroke-width="3" opacity="0.5"/>
+  <line x1="292" y1="225" x2="292" y2="415" stroke="#2DD4BF" stroke-width="3" opacity="0.5"/>
+</svg>"""
+
+web_dir = r"E:\Proyecto\Proyecto\appweb\static\img\logos"
+os.makedirs(web_dir, exist_ok=True)
+
+files = {
+    'logo_chimu_bus.svg': svg_chimu,
+    'logo_totora_gps.svg': svg_totora,
+    'logo_primavera_route.svg': svg_primavera,
+    'logo_marinera_wave.svg': svg_marinera,
+    'logo_monograma_t.svg': svg_monograma
+}
+
+for name, content in files.items():
+    p = os.path.join(web_dir, name)
+    with open(p, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"Generated: {p}")
+
+# Also build an interactive showcase HTML
+html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Propuestas de Logos Oficiales - RutaTrujillo & Nuevo California</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {{ font-family: 'Plus Jakarta Sans', sans-serif; }}
+    .logo-card:hover .logo-preview {{ transform: scale(1.04); transition: transform 0.3s ease; }}
+    .phone-mockup {{ box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }}
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen py-10 px-4 md:px-12">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <header class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-1.5 rounded-full text-emerald-400 text-xs font-bold tracking-widest uppercase mb-4">
+        Coleccion de Identidad Visual 2026
+      </div>
+      <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight">
+        Logos Innovadores de <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-400 bg-clip-text text-transparent">RutaTrujillo</span>
+      </h1>
+      <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mt-3">
+        Fusi&oacute;n tecnol&oacute;gica entre la herencia cultural de Trujillo (Chan Chan, Huanchaco, Primavera, Marinera) y el dise&ntilde;o m&oacute;vil contempor&aacute;neo (Android Material You & iOS).
+      </p>
+    </header>
+
+    <!-- Grid of 5 Logos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      
+      <!-- Card 1: Chimu Bus -->
+      <div class="logo-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between hover:border-emerald-500/50 transition">
+        <div>
+          <div class="aspect-square bg-slate-950/80 rounded-2xl p-6 flex items-center justify-center border border-slate-800/80 mb-5 relative overflow-hidden">
+            <div class="w-44 h-44 logo-preview transition">
+              {svg_chimu}
+            </div>
+          </div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Concepto 01 &bull; Patrimonio</span>
+            <span class="bg-amber-500/10 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-semibold">Chan Chan</span>
+          </div>
+          <h2 class="text-xl font-bold text-white">El Tótem Chimú Tech</h2>
+          <p class="text-slate-400 text-sm mt-2 leading-relaxed">
+            Las milenarias grecas escalonadas de barro de Chan Chan moldeadas como la visera superior y la parrilla aerodin&aacute;mica de un microb&uacute;s el&eacute;ctrico inteligente, con faros LED de &aacute;mbar.
+          </p>
+        </div>
+        <div class="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Paleta: Esmeralda, Turquesa, Oro Moche</span>
+          <a href="img/logos/logo_chimu_bus.svg" download class="text-emerald-400 hover:underline font-bold">Descargar SVG &darr;</a>
+        </div>
+      </div>
+
+      <!-- Card 2: Totora GPS -->
+      <div class="logo-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between hover:border-teal-500/50 transition">
+        <div>
+          <div class="aspect-square bg-slate-950/80 rounded-2xl p-6 flex items-center justify-center border border-slate-800/80 mb-5 relative overflow-hidden">
+            <div class="w-44 h-44 logo-preview transition">
+              {svg_totora}
+            </div>
+          </div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-teal-400">Concepto 02 &bull; Dinamismo</span>
+            <span class="bg-teal-500/10 text-teal-300 text-xs px-2.5 py-0.5 rounded-full font-semibold">Huanchaco</span>
+          </div>
+          <h2 class="text-xl font-bold text-white">El Caballito de Totora & GPS</h2>
+          <p class="text-slate-400 text-sm mt-2 leading-relaxed">
+            La emblem&aacute;tica proa curvada del caballito de totora cortando las olas se fusiona con un pin de localizaci&oacute;n satelital y el frente de un autob&uacute;s urbano. Simboliza agilidad frente al tr&aacute;fico.
+          </p>
+        </div>
+        <div class="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Paleta: Azul Noche, Ca&ntilde;a Dorada, Turquesa</span>
+          <a href="img/logos/logo_totora_gps.svg" download class="text-teal-400 hover:underline font-bold">Descargar SVG &darr;</a>
+        </div>
+      </div>
+
+      <!-- Card 3: Primavera Route -->
+      <div class="logo-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between hover:border-lime-500/50 transition">
+        <div>
+          <div class="aspect-square bg-slate-950/80 rounded-2xl p-6 flex items-center justify-center border border-slate-800/80 mb-5 relative overflow-hidden">
+            <div class="w-44 h-44 logo-preview transition">
+              {svg_primavera}
+            </div>
+          </div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-lime-400">Concepto 03 &bull; Amabilidad</span>
+            <span class="bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-0.5 rounded-full font-semibold">Eterna Primavera</span>
+          </div>
+          <h2 class="text-xl font-bold text-white">Flor Vial de la Eterna Primavera</h2>
+          <p class="text-slate-400 text-sm mt-2 leading-relaxed">
+            4 p&eacute;talos geom&eacute;tricos que representan un tr&eacute;bol vial conectando los 4 puntos cardinales de Trujillo (Esperanza, Laredo, V&iacute;ctor Larco, Huanchaco) con una rosa solar central.
+          </p>
+        </div>
+        <div class="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Paleta: Verde Primavera, Lima, Sol Radiante</span>
+          <a href="img/logos/logo_primavera_route.svg" download class="text-lime-400 hover:underline font-bold">Descargar SVG &darr;</a>
+        </div>
+      </div>
+
+      <!-- Card 4: Marinera Wave -->
+      <div class="logo-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between hover:border-cyan-500/50 transition">
+        <div>
+          <div class="aspect-square bg-slate-950/80 rounded-2xl p-6 flex items-center justify-center border border-slate-800/80 mb-5 relative overflow-hidden">
+            <div class="w-44 h-44 logo-preview transition">
+              {svg_marinera}
+            </div>
+          </div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Concepto 04 &bull; Elegancia</span>
+            <span class="bg-rose-500/10 text-rose-300 text-xs px-2.5 py-0.5 rounded-full font-semibold">Marinera Norte&ntilde;a</span>
+          </div>
+          <h2 class="text-xl font-bold text-white">El Pañuelo Marinera (Flow Ribbon)</h2>
+          <p class="text-slate-400 text-sm mt-2 leading-relaxed">
+            La cinta ondeante del pa&ntilde;uelo blanco al aire estilizada como una autopista infinita sobre la cual se desliza un b&uacute;s de Nuevo California, custodiado por el sombrero tradicional de chal&aacute;n.
+          </p>
+        </div>
+        <div class="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Paleta: Seda Blanca, Turquesa Profundo, Rub&iacute;</span>
+          <a href="img/logos/logo_marinera_wave.svg" download class="text-cyan-400 hover:underline font-bold">Descargar SVG &darr;</a>
+        </div>
+      </div>
+
+      <!-- Card 5: Monograma T -->
+      <div class="logo-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between hover:border-emerald-500/50 transition lg:col-span-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="aspect-square bg-slate-950/80 rounded-2xl p-6 flex items-center justify-center border border-slate-800/80">
+            <div class="w-52 h-52 logo-preview transition">
+              {svg_monograma}
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Concepto 05 &bull; Minimalismo Global</span>
+              <span class="bg-purple-500/10 text-purple-300 text-xs px-2.5 py-0.5 rounded-full font-semibold">Ultra Escala</span>
+            </div>
+            <h2 class="text-2xl font-bold text-white">Monograma &ldquo;T&rdquo; Satelital (Frente & Avenida)</h2>
+            <p class="text-slate-400 text-sm mt-3 leading-relaxed">
+              La letra &ldquo;T&rdquo; de <strong>Trujillo y Transporte</strong> construida con trazos s&oacute;lidos de autopista: el travesa&ntilde;o horizontal es la visera y cabina del microb&uacute;s con ruta LED en vivo, y el trazo vertical es la avenida asf&aacute;ltica con l&iacute;neas reflectivas y antena de telemetr&iacute;a satelital.
+            </p>
+            <div class="mt-4 p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 text-xs text-slate-300 space-y-1">
+              <div>&bull; <strong>Ventaja clave:</strong> M&aacute;xima legibilidad a cualquier tama&ntilde;o (icono de 24px hasta valla de paradero).</div>
+              <div>&bull; <strong>Estilo:</strong> Compatible con las gu&iacute;as de Google Play Store y Apple App Store.</div>
+            </div>
+            <div class="mt-5 flex items-center justify-between text-xs text-slate-400">
+              <span>Paleta: Esmeralda Ne&oacute;n, Grafito 0F, Amarillo Vial</span>
+              <a href="img/logos/logo_monograma_t.svg" download class="text-emerald-400 hover:underline font-bold">Descargar SVG &darr;</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Live Smartphone Preview -->
+    <section class="mt-16 bg-slate-900/50 border border-slate-800 rounded-3xl p-8 text-center">
+      <h3 class="text-2xl font-bold text-white mb-2">Simulador en Pantalla de Android</h3>
+      <p class="text-slate-400 text-sm max-w-xl mx-auto mb-8">
+        Visualiza c&oacute;mo se ver&iacute;an estos iconos en la pantalla principal de un tel&eacute;fono junto a apps cotidianas como WhatsApp, Maps y Waze.
+      </p>
+      
+      <div class="flex flex-wrap justify-center gap-8 items-end">
+        
+        <!-- Icon 1 Mock -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-white/10 hover:scale-110 transition">
+            {svg_chimu}
+          </div>
+          <span class="text-xs text-slate-300 font-medium">RutaTrujillo</span>
+        </div>
+
+        <!-- Icon 2 Mock -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-white/10 hover:scale-110 transition">
+            {svg_totora}
+          </div>
+          <span class="text-xs text-slate-300 font-medium">Nuevo Calif.</span>
+        </div>
+
+        <!-- Icon 3 Mock -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-white/10 hover:scale-110 transition">
+            {svg_primavera}
+          </div>
+          <span class="text-xs text-slate-300 font-medium">RutaTrujillo</span>
+        </div>
+
+        <!-- Icon 4 Mock -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-white/10 hover:scale-110 transition">
+            {svg_marinera}
+          </div>
+          <span class="text-xs text-slate-300 font-medium">Nuevo Calif.</span>
+        </div>
+
+        <!-- Icon 5 Mock (Featured) -->
+        <div class="flex flex-col items-center gap-2 ring-2 ring-emerald-400/50 p-2 rounded-2xl bg-emerald-500/5">
+          <div class="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-white/10 hover:scale-110 transition">
+            {svg_monograma}
+          </div>
+          <span class="text-xs text-emerald-300 font-bold">RutaTrujillo ★</span>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</body>
+</html>
+"""
+
+html_path = r"E:\Proyecto\Proyecto\appweb\static\logos_showcase.html"
+with open(html_path, 'w', encoding='utf-8') as f:
+    f.write(html)
+print(f"Showcase generated at {html_path}")

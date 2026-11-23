@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="50%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#042F2E"/>
+    </linearGradient>
+    <linearGradient id="accent-grad-1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="115" fill="url(#bg-grad-1)"/>
+  
+  <!-- Chan Chan Geometric Wave Pattern (Adobe Murals) in Background -->
+  <g opacity="0.15" stroke="#FFFFFF" stroke-width="6" fill="none">
+    <path d="M 40 120 L 70 120 L 70 90 L 100 90 L 100 60 L 130 60 L 130 90 L 160 90 L 160 120 L 190 120" />
+    <path d="M 322 120 L 352 120 L 352 90 L 382 90 L 382 60 L 412 60 L 412 90 L 442 90 L 442 120 L 472 120" />
+    <path d="M 40 430 L 70 430 L 70 400 L 100 400 L 100 370 L 130 370 L 130 400 L 160 400 L 160 430 L 190 430" />
+    <path d="M 322 430 L 352 430 L 352 400 L 382 400 L 382 370 L 412 370 L 412 400 L 442 400 L 442 430 L 472 430" />
+  </g>
+
+  <!-- Pulse Rings -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#2DD4BF" stroke-width="2" opacity="0.2" stroke-dasharray="8 8"/>
+  <circle cx="256" cy="256" r="175" fill="none" stroke="#2DD4BF" stroke-width="3" opacity="0.4"/>
+
+  <!-- Main Chimu Stepped Fretwork Top Crown -->
+  <path d="M 196 140 L 226 140 L 226 115 L 286 115 L 286 140 L 316 140 L 316 165 L 196 165 Z" fill="url(#gold-grad)" filter="url(#glow)"/>
+
+  <!-- Bus Outer Shield Body -->
+  <rect x="136" y="160" width="240" height="230" rx="40" fill="#111827" stroke="url(#accent-grad-1)" stroke-width="8"/>
+  
+  <!-- Upper Route Screen / Led Sign -->
+  <rect x="176" y="182" width="160" height="32" rx="10" fill="#042F2E" stroke="#2DD4BF" stroke-width="2"/>
+  <text x="256" y="204" fill="#2DD4BF" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="900" text-anchor="middle" letter-spacing="3">TRUJILLO</text>
+
+  <!-- Windshield / Parabrisas Minimalista -->
+  <path d="M 156 230 C 156 225 160 220 166 220 L 346 220 C 352 220 356 225 356 230 L 356 288 C 356 295 350 300 344 300 L 168 300 C 162 300 156 295 156 288 Z" fill="url(#accent-grad-1)" opacity="0.9"/>
+  
+  <!-- Rearview Mirrors -->
+  <rect x="114" y="235" width="14" height="44" rx="7" fill="#2DD4BF"/>
+  <rect x="384" y="235" width="14" height="44" rx="7" fill="#2DD4BF"/>
+
+  <!-- Chimu Stepped Grill (Parrilla Chan Chan) -->
+  <g fill="#2DD4BF">
+    <rect x="206" y="322" width="100" height="6" rx="3"/>
+    <rect x="221" y="336" width="70" height="6" rx="3"/>
+    <rect x="236" y="350" width="40" height="6" rx="3"/>
+  </g>
+
+  <!-- High-tech LED Headlights -->
+  <circle cx="176" cy="336" r="16" fill="#0F172A" stroke="#F59E0B" stroke-width="4"/>
+  <circle cx="176" cy="336" r="8" fill="#FBBF24" filter="url(#glow)"/>
+  
+  <circle cx="336" cy="336" r="16" fill="#0F172A" stroke="#F59E0B" stroke-width="4"/>
+  <circle cx="336" cy="336" r="8" fill="#FBBF24" filter="url(#glow)"/>
+
+  <!-- Wheels / Bottom Suspension -->
+  <rect x="166" y="390" width="40" height="14" rx="5" fill="#042F2E"/>
+  <rect x="306" y="390" width="40" height="14" rx="5" fill="#042F2E"/>
+</svg>
