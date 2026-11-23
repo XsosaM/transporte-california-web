@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Rentabilidad, Heatmap y Auditoría · Nuevo California{% endblock %}
-{% block page_title %}Rentabilidad, Analítica B2B y Seguridad Vial{% endblock %}
+{% block page_title %}Rentabilidad, Analítica y Seguridad Vial{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
@@ -92,7 +92,7 @@
         <div class="panel-card p-3 h-100">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                 <div>
-                    <h2 class="panel-title">Mapa de Calor: Demanda Perdida y Paraderos Seguros (Trujillo)</h2>
+                    <h2 class="panel-title">Mapa de Calor: Demanda de Pasajeros y Paraderos Seguros</h2>
                     <p class="panel-subtitle">Círculos rojos indican demanda insatisfecha; escudos verdes muestran paraderos iluminados con serenazgo.</p>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
@@ -121,7 +121,7 @@
                             <th>Zona / Paradero</th>
                             <th>Espera</th>
                             <th>Perdidos</th>
-                            <th>Sugerencia IA</th>
+                            <th>Acción Operativa Sugerida</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -144,7 +144,7 @@
                             </td>
                             <td class="font-mono-tech fw-semibold text-danger">
                                 {% if z.demanda_perdida_pasajeros > 0 %}
-                                    -{{ z.demanda_perdida_pasajeros }} pas. (S/ {{ z.ingreso_no_captado|floatformat:2 }})
+                                    -{{ z.demanda_perdida_pasajeros }} pas. · S/ {{ z.ingreso_no_captado|floatformat:2 }}
                                 {% else %}
                                     0 pas.
                                 {% endif %}
@@ -172,7 +172,7 @@
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Unidad (Placa / Padrón)</th>
+                    <th>Unidad · Padrón</th>
                     <th>Vueltas</th>
                     <th>Distancia GPS</th>
                     <th>Comb. Teórico</th>
@@ -217,7 +217,7 @@
         <div class="panel-card p-3 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h2 class="panel-title"><i class="bi bi-shield-fill-check text-success me-1"></i> Paraderos Seguros e Iluminados (Crowdsourcing Pasajeros)</h2>
+                    <h2 class="panel-title"><i class="bi bi-shield-fill-check text-success me-1"></i> Paraderos Seguros e Iluminados</h2>
                     <p class="panel-subtitle">Calificación comunitaria en tiempo real de iluminación nocturna, serenazgo y comercios cercanos.</p>
                 </div>
                 <span class="badge text-bg-primary">{{ safe_stops|length }} paraderos auditados</span>
@@ -348,9 +348,9 @@
         if (!el || typeof L === 'undefined') return;
 
         const map = L.map(el).setView([-8.1116, -79.0335], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '&copy; Google Maps'
         }).addTo(map);
 
         const heatGroup = L.layerGroup().addTo(map);

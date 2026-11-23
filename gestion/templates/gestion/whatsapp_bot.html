@@ -1,11 +1,11 @@
 {% extends 'gestion/base.html' %}
 
 {% block title %}Bot WhatsApp · Nuevo California{% endblock %}
-{% block page_title %}Bot de Consulta Rápida por WhatsApp (Costo S/ 0.00){% endblock %}
+{% block page_title %}Bot de Consulta Rápida por WhatsApp{% endblock %}
 
 {% block page_actions %}
 <a class="btn btn-success btn-sm" href="{{ resultado.wa_deep_link }}" target="_blank">
-    <i class="bi bi-whatsapp me-1"></i> Probar Envío Directo en WhatsApp
+    <i class="bi bi-whatsapp me-1"></i> Abrir WhatsApp
 </a>
 {% endblock %}
 
@@ -13,8 +13,8 @@
 <div class="row g-3">
     <div class="col-xl-5">
         <div class="panel-card p-3 h-100">
-            <h2 class="panel-title mb-1"><i class="bi bi-robot text-success me-1"></i> Simulador de Consulta por Ubicación</h2>
-            <p class="panel-subtitle mb-3">Permite a pasajeros con celulares sin espacio de almacenamiento consultar el micro más cercano vía enlace directo <code>wa.me</code> y API gratuita.</p>
+            <h2 class="panel-title mb-1"><i class="bi bi-robot text-success me-1"></i> Consulta de Unidades por Ubicación</h2>
+            <p class="panel-subtitle mb-3">Permite a pasajeros consultar el microbús más cercano vía enlace directo de mensajería instantánea.</p>
 
             <form method="get" action="{% url 'whatsapp_bot' %}" class="row g-2 mb-3">
                 <div class="col-12">
@@ -22,7 +22,7 @@
                     <select class="form-select" name="paradero" id="bot-stop-select">
                         {% for s in safe_stops %}
                             <option value="{{ s.nombre }}" data-lat="{{ s.lat }}" data-lng="{{ s.lng }}" {% if s.nombre == paradero %}selected{% endif %}>
-                                🛡️ {{ s.nombre }} (★ {{ s.calificacion }})
+                                🛡️ {{ s.nombre }} · ★ {{ s.calificacion }}
                             </option>
                         {% endfor %}
                     </select>
@@ -37,15 +37,15 @@
                 </div>
                 <div class="col-12 mt-2">
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-lightning-charge-fill me-1"></i> Calcular Unidad Más Cercana Ahora
+                        <i class="bi bi-lightning-charge-fill me-1"></i> Consultar Unidad Más Cercana
                     </button>
                 </div>
             </form>
 
             <div class="p-3 rounded-3 bg-light border">
-                <div class="small fw-bold text-uppercase text-secondary mb-2">Endpoint API Gratuito (Webhook JSON)</div>
+                <div class="small fw-bold text-uppercase text-secondary mb-2">Endpoint de Integración Webhook JSON</div>
                 <code class="small d-block text-break mb-2">/api/whatsapp-consulta/?lat={{ lat }}&amp;lng={{ lng }}</code>
-                <div class="small text-secondary">Este endpoint responde en milisegundos sin usar servicios de pago (Twilio/Meta Cloud de pago), conectándose directo al GPS del celular del conductor.</div>
+                <div class="small text-secondary">Este servicio procesa consultas satelitales en tiempo real y devuelve la unidad con menor tiempo estimado de llegada.</div>
             </div>
         </div>
     </div>
@@ -61,14 +61,14 @@
                             <div style="font-size:0.7rem;opacity:0.85;">En línea · Respuesta automática GPS</div>
                         </div>
                     </div>
-                    <span class="badge bg-success">GRATUITO</span>
+                    <span class="badge bg-success">OPERACIONAL</span>
                 </div>
 
                 <!-- Mensaje del pasajero -->
                 <div class="d-flex justify-content-end mb-3">
                     <div class="p-2 px-3 rounded-3 shadow-sm" style="background:#dcf8c6;max-width:80%;color:#111827;">
                         <div class="small fw-semibold text-success mb-1"><i class="bi bi-geo-alt-fill"></i> Ubicación compartida: {{ paradero }}</div>
-                        <div class="small">Hola, ¿a cuánto tiempo está el próximo micro de Nuevo California? ({{ lat }}, {{ lng }})</div>
+                        <div class="small">Hola, ¿a cuánto tiempo está el próximo micro de Nuevo California en {{ paradero }}?</div>
                         <div class="text-end text-muted" style="font-size:0.65rem;">Ahora ✓✓</div>
                     </div>
                 </div>
@@ -76,13 +76,13 @@
                 <!-- Respuesta instantánea del Bot -->
                 <div class="d-flex justify-content-start mb-3">
                     <div class="p-3 rounded-3 shadow-sm bg-white" style="max-width:88%;color:#111827;">
-                        <div class="fw-bold text-teal mb-1" style="color:#075e54;">🚌 Bot RutaTrujillo · Nuevo California</div>
+                        <div class="fw-bold text-teal mb-1" style="color:#075e54;">🚌 Central Nuevo California</div>
                         <p class="small mb-2">
-                            Tu unidad más cercana es la <strong>Línea {{ resultado.unidad.letra }} (Placa {{ resultado.unidad.placa }})</strong>.<br>
-                            📏 Distancia: <strong>{{ resultado.cuadras }} cuadras</strong> ({{ resultado.distancia_m }} m)<br>
+                            Tu unidad más cercana es la <strong>Línea {{ resultado.unidad.letra }} · Placa {{ resultado.unidad.placa }}</strong>.<br>
+                            📏 Distancia: <strong>{{ resultado.cuadras }} cuadras</strong> · {{ resultado.distancia_m }} m<br>
                             ⏱️ Llega en: <strong>~{{ resultado.eta_min }} minutos</strong><br>
                             💺 Ocupación actual: <strong>{{ resultado.unidad.ocupacionLabel|default:'Asientos libres' }}</strong><br>
-                            🛡️ Paradero Seguro sugerido: <strong>{{ resultado.paradero_seguro }}</strong> (💡 Iluminado)<br>
+                            🛡️ Paradero Seguro: <strong>{{ resultado.paradero_seguro }}</strong> · Iluminado<br>
                             💰 Tarifa urbana: <strong>S/ 1.50</strong>
                         </p>
                         <div class="d-flex flex-wrap gap-2 mt-2">

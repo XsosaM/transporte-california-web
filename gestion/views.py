@@ -873,7 +873,7 @@ def reports_view(request):
             "demanda_perdida_pasajeros": 11,
             "ingreso_no_captado": 16.50,
             "nivel": "CRITICO",
-            "accion_sugerida": "Adelantar despacho de Línea A en 4 min (Hora Punta)",
+            "accion_sugerida": "Adelantar despacho de Línea A en 4 minutos",
         },
         {
             "zona": "U.N.T. Puerta Principal · Av. Juan Pablo II",
