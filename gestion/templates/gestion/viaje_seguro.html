@@ -48,7 +48,13 @@
             height: 8px;
             border-radius: 50%;
             background: #10b981;
-            box-shadow: 0 0 8px #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: live-pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+        @keyframes live-pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         #safe-trip-map {
             flex: 1 1 auto;
@@ -106,7 +112,7 @@
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge fs-6 px-3 py-2" style="background:#0f766e;" id="st-linea">Línea {{ unidad.letra }}</span>
                     <div>
-                        <div class="fw-bold fs-5" id="st-placa">Unidad {{ unidad.placa }} (Padrón {{ unidad.numeroPadron|default:'01' }})</div>
+                        <div class="fw-bold fs-5" id="st-placa">Unidad {{ unidad.placa }} · Padrón {{ unidad.numeroPadron|default:'01' }}</div>
                         <div class="small text-secondary"><i class="bi bi-person-badge me-1"></i>Conductor verificado: <strong id="st-conductor">{{ unidad.conductorNombre }}</strong></div>
                     </div>
                 </div>
@@ -149,7 +155,7 @@
                     <i class="bi bi-check-circle-fill me-1"></i>
                     <strong>Ruta monitoreada por Central Trujillo:</strong> Este vehículo transmite su telemetría oficial sin costo para tus familiares.
                 </div>
-                <span class="font-monospace small text-muted" id="st-coord">{{ unidad.lat }}, {{ unidad.lng }}</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium" id="st-coord"><i class="bi bi-shield-check me-1"></i>Telemetría Oficial</span>
             </div>
         </div>
     </section>
@@ -166,9 +172,9 @@
         const safeStops = {{ safe_stops_json|safe }};
         const map = L.map('safe-trip-map').setView([initialUnit.lat || -8.1116, initialUnit.lng || -79.0287], 15);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '&copy; Google Maps'
         }).addTo(map);
 
         const busHtml = '<div style="background:#0f766e;color:#fff;border:3px solid #fff;border-radius:10px;padding:4px 8px;font-weight:800;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.35);white-space:nowrap;">🚌 ' + (initialUnit.placa || 'T4A-812') + '</div>';

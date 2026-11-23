@@ -14,11 +14,12 @@
         :root {
             --nc-bg: #f8fafc;
             --nc-surface: #ffffff;
-            --nc-sidebar: #0f172a;
-            --nc-sidebar-border: #1e293b;
-            --nc-accent: #0f766e;
-            --nc-accent-hover: #115e59;
-            --nc-accent-soft: #e6f2f1;
+            --nc-sidebar: #06231c;
+            --nc-sidebar-surface: #0a2f26;
+            --nc-sidebar-border: #133f33;
+            --nc-accent: #059669;
+            --nc-accent-hover: #047857;
+            --nc-accent-soft: #ecfdf5;
             --nc-text: #0f172a;
             --nc-muted: #64748b;
             --nc-border: #e2e8f0;
@@ -70,13 +71,13 @@
         }
 
 
-        /* ================= SIDEBAR ================= */
+        /* ================= SIDEBAR (VERDE ELEGANTE PROFESIONAL) ================= */
         .sidebar {
             width: 256px;
             height: 100%;
             min-height: 0;
             flex-shrink: 0;
-            background: var(--nc-sidebar);
+            background: linear-gradient(180deg, #072820 0%, #031713 100%);
             color: #e2e8f0;
             display: flex;
             flex-direction: column;
@@ -84,6 +85,7 @@
             border-right: 1px solid var(--nc-sidebar-border);
             z-index: 1030;
             overflow: hidden;
+            box-shadow: 4px 0 24px rgba(3, 23, 19, 0.28);
         }
 
 
@@ -98,71 +100,79 @@
             width: 4px;
         }
         .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(52, 211, 153, 0.2);
             border-radius: 4px;
         }
 
 
         .brand-box {
             padding: 1.15rem 1.15rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            border-bottom: 1px solid rgba(52, 211, 153, 0.14);
+            background: rgba(0, 0, 0, 0.16);
         }
         .brand-mark {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: var(--nc-accent);
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
             color: #fff;
-            font-size: 1rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 1.05rem;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
         }
         .brand-subtitle {
             font-size: 0.65rem;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            color: #94a3b8;
-            font-weight: 500;
+            color: #6ee7b7;
+            opacity: 0.85;
+            font-weight: 600;
         }
         .nav-section-label {
             font-size: 0.68rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #64748b;
+            letter-spacing: 0.09em;
+            color: #6ee7b7;
+            opacity: 0.65;
             font-weight: 700;
             padding: 1rem 0.75rem 0.35rem;
         }
         .sidebar .nav-link {
-            color: #94a3b8;
-            border-radius: 6px;
-            padding: 0.5rem 0.75rem;
+            color: #a7cfbc;
+            border-radius: 8px;
+            padding: 0.52rem 0.75rem;
             font-size: 0.85rem;
             font-weight: 500;
             display: flex;
             align-items: center;
             gap: 0.7rem;
-            border-left: 2px solid transparent;
-            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .sidebar .nav-link i { font-size: 1rem; width: 18px; color: #64748b; transition: color 0.15s ease; }
-        .sidebar .nav-link:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.05); }
-        .sidebar .nav-link:hover i { color: #cbd5e1; }
+        .sidebar .nav-link i { font-size: 1rem; width: 18px; color: #5f8d7b; transition: all 0.2s ease; }
+        .sidebar .nav-link:hover {
+            color: #ffffff;
+            background: rgba(16, 185, 129, 0.12);
+            transform: translateX(3px);
+        }
+        .sidebar .nav-link:hover i { color: #a7f3d0; }
         .sidebar .nav-link.active {
             color: #ffffff;
             font-weight: 600;
-            background: rgba(255, 255, 255, 0.08);
-            border-left-color: #2dd4bf;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.22) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-left-color: #10b981;
+            box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.1);
         }
-        .sidebar .nav-link.active i { color: #2dd4bf; }
+        .sidebar .nav-link.active i { color: #34d399; }
 
 
         .sidebar-footer {
             flex-shrink: 0;
             padding: 0.85rem 1rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(3, 17, 13, 0.6);
+            border-top: 1px solid rgba(52, 211, 153, 0.14);
         }
 
 
@@ -172,9 +182,29 @@
             border-radius: 50%;
             background: #94a3b8;
             display: inline-block;
+            transition: background 0.3s ease;
         }
-        .status-dot.on { background: #10b981; box-shadow: 0 0 6px #10b981; }
-        .status-dot.off { background: #ef4444; }
+        .status-dot.on {
+            background: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75);
+            animation: live-pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+        .status-dot.off {
+            background: #ef4444;
+            box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes live-pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
 
 
         /* ================= WORKSPACE AREA ================= */
@@ -252,11 +282,17 @@
         .panel-card {
             background: var(--nc-surface);
             border: 1px solid var(--nc-border);
-            border-radius: 10px;
+            border-radius: 12px;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
         }
-        .panel-card-interactive { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
-        .panel-card-interactive:hover { border-color: #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04); }
+        .panel-card:hover {
+            transform: translateY(-2px);
+            border-color: #a7f3d0;
+            box-shadow: 0 12px 24px -6px rgba(5, 150, 105, 0.08), 0 6px 10px -4px rgba(0, 0, 0, 0.03);
+        }
+        .panel-card-interactive { transition: all 0.2s ease; }
+        .panel-card-interactive:hover { border-color: #059669; box-shadow: 0 8px 20px -2px rgba(5, 150, 105, 0.12); }
         .panel-title { font-size: 0.98rem; font-weight: 600; margin-bottom: 0; color: #0f172a; }
         .panel-subtitle { font-size: 0.8rem; color: var(--nc-muted); margin-bottom: 0; }
 
@@ -264,15 +300,21 @@
         .metric-label { font-size: 0.78rem; color: var(--nc-muted); font-weight: 500; }
         .metric-value { font-size: 1.75rem; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; color: #0f172a; }
         .metric-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             background: #f1f5f9;
             color: #334155;
-            font-size: 1rem;
+            font-size: 1.05rem;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, color 0.25s ease;
+        }
+        .panel-card:hover .metric-icon {
+            transform: scale(1.12) rotate(4deg);
+            background: #d1fae5;
+            color: #059669;
         }
 
 
@@ -498,16 +540,16 @@
                 </nav>
 
 
-                <div class="nav-section-label">Análisis e Innovación</div>
+                <div class="nav-section-label">Análisis y Seguridad</div>
                 <nav class="nav flex-column gap-1">
                     <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}">
-                        <i class="bi bi-bar-chart-line"></i><span>Rentabilidad y BI</span>
+                        <i class="bi bi-bar-chart-line"></i><span>Rentabilidad y Analítica</span>
                     </a>
                     <a class="nav-link {% if request.resolver_match.url_name == 'whatsapp_bot' %}active{% endif %}" href="{% url 'whatsapp_bot' %}">
                         <i class="bi bi-whatsapp"></i><span>Bot WhatsApp</span>
                     </a>
                     <a class="nav-link {% if 'viaje_seguro' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'viaje_seguro_index' %}" target="_blank">
-                        <i class="bi bi-shield-check"></i><span>Viaje Seguro (Web)</span>
+                        <i class="bi bi-shield-check"></i><span>Viaje Seguro</span>
                     </a>
                 </nav>
             </div>
@@ -549,6 +591,10 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+                <button class="btn btn-sm btn-outline-secondary p-1 px-2 d-inline-flex align-items-center gap-1" id="nc-sound-toggle" type="button" title="Alertas sonoras del Centro de Control" style="font-size:0.78rem;">
+                    <i class="bi bi-volume-mute text-secondary" id="nc-sound-icon"></i>
+                    <span class="d-none d-md-inline" id="nc-sound-label">Alertas</span>
+                </button>
                 <span class="tech-pill" id="nc-api-status" title="Conexión con la API de transporte">
                     <span class="status-dot" id="nc-api-dot"></span>
                     <span id="nc-api-label">API</span>
@@ -605,6 +651,89 @@
         }
     }, { passive: true });
 
+
+    // Sistema de Alertas Sonoras Sutiles (Web Audio API - Cero dependencias externas)
+    window.ncAudioAlerts = (function () {
+        let audioCtx = null;
+        let soundEnabled = localStorage.getItem('nc_sound_enabled') === 'true';
+
+        function initContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playChime(freq1 = 587.33, freq2 = 880, duration = 0.22) {
+            if (!soundEnabled) return;
+            try {
+                initContext();
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq1, now);
+                osc.frequency.exponentialRampToValueAtTime(freq2, now + 0.08);
+                
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(0.06, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(now);
+                osc.stop(now + duration);
+            } catch (e) {}
+        }
+
+        function setSoundEnabled(enabled) {
+            soundEnabled = enabled;
+            localStorage.setItem('nc_sound_enabled', enabled ? 'true' : 'false');
+            updateUi();
+            if (enabled) playChime(523.25, 659.25, 0.2);
+        }
+
+        function updateUi() {
+            const btn = document.getElementById('nc-sound-toggle');
+            const icon = document.getElementById('nc-sound-icon');
+            const label = document.getElementById('nc-sound-label');
+            if (!btn || !icon) return;
+            btn.classList.toggle('btn-outline-success', soundEnabled);
+            btn.classList.toggle('btn-outline-secondary', !soundEnabled);
+            if (soundEnabled) {
+                icon.className = 'bi bi-volume-up-fill text-success';
+                btn.title = 'Alertas sonoras: ACTIVADAS (Click para silenciar)';
+                if (label) label.textContent = 'Alertas ON';
+            } else {
+                icon.className = 'bi bi-volume-mute text-secondary';
+                btn.title = 'Alertas sonoras: SILENCIADAS (Click para activar)';
+                if (label) label.textContent = 'Alertas OFF';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateUi();
+            const btn = document.getElementById('nc-sound-toggle');
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    initContext();
+                    setSoundEnabled(!soundEnabled);
+                });
+            }
+        });
+
+        return {
+            chime: playChime,
+            isEnabled: () => soundEnabled,
+            toggle: () => setSoundEnabled(!soundEnabled)
+        };
+    })();
 
     // Indicador de conexión real con la API
     window.ncSetApiStatus = function (online) {

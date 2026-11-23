@@ -240,9 +240,10 @@ if (typeof L === 'undefined') {
         maxZoom: 20,
         attribution: "&copy; Google Satellite"
     });
-    const layerOsm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const layerOsm = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
-        attribution: "&copy; OpenStreetMap"
+        subdomains: "abcd",
+        attribution: "&copy; OpenStreetMap &copy; CARTO"
     });
 
     // Activar Google Maps por defecto
@@ -440,6 +441,9 @@ if (typeof L === 'undefined') {
         JSON.parse(document.getElementById("dashboard-initial-passengers").textContent || "[]")
     );
 
+    let prevOpenIncidents = null;
+    let prevPosCount = null;
+
     // Polling en vivo cada 3 segundos
     async function poll() {
         try {
@@ -451,6 +455,16 @@ if (typeof L === 'undefined') {
             if (typeof data.open_incidents === "number") {
                 const incKpi = document.getElementById("kpi-open-incidents");
                 if (incKpi) incKpi.textContent = data.open_incidents;
+                if (prevOpenIncidents !== null && data.open_incidents > prevOpenIncidents) {
+                    if (window.ncAudioAlerts) window.ncAudioAlerts.chime(440, 880, 0.3);
+                }
+                prevOpenIncidents = data.open_incidents;
+            }
+            if (Array.isArray(data.posiciones)) {
+                if (prevPosCount !== null && data.posiciones.length > prevPosCount) {
+                    if (window.ncAudioAlerts) window.ncAudioAlerts.chime(587.33, 880, 0.2);
+                }
+                prevPosCount = data.posiciones.length;
             }
         } catch (e) {
             window.ncSetApiStatus(false);
