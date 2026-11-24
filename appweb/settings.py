@@ -99,9 +99,9 @@ MAILERS = {
     },
 }
 
-# Configuración de conexión con la API Spring Boot (transporte-api)
+# Configuración de conexión con la API Spring Boot (transporte-api en Render Cloud)
 TRANSPORTE_API_BASE_URL = os.environ.get(
-    "TRANSPORTE_API_BASE_URL", "http://127.0.0.1:8080/api/v1"
+    "TRANSPORTE_API_BASE_URL", "https://transporte-california-api.onrender.com/api/v1"
 )
 TRANSPORTE_DJANGO_API_KEY = os.environ.get(
     "TRANSPORTE_DJANGO_API_KEY", "django_api_key_dev_7b6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c"
