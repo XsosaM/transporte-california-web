@@ -35,49 +35,49 @@
 
 {% block content %}
 <!-- 1. KPIs Financieros y de Rentabilidad B2B (100% Gratuito) -->
-<div class="row g-3 mb-3">
-    <div class="col-6 col-xl-3">
+<div class="row g-2 g-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="panel-card kpi-fin-card profit p-3 h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="metric-label">Recaudación Bruta Est.</div>
-                    <div class="metric-value mt-1" style="font-size:1.45rem;">S/ {{ total_recaudacion_est }}</div>
+                    <div class="metric-value mt-1" style="font-size:clamp(1.2rem, 3.5vw, 1.45rem);">S/ {{ total_recaudacion_est }}</div>
                     <div class="small text-success fw-medium mt-1"><i class="bi bi-graph-up-arrow"></i> Tarifa urbana S/ 1.50</div>
                 </div>
                 <span class="metric-icon text-success"><i class="bi bi-cash-stack"></i></span>
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="panel-card kpi-fin-card warn p-3 h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="metric-label">Gasto Combustible Real</div>
-                    <div class="metric-value mt-1" style="font-size:1.45rem;">S/ {{ total_gasto_combustible }}</div>
+                    <div class="metric-value mt-1" style="font-size:clamp(1.2rem, 3.5vw, 1.45rem);">S/ {{ total_gasto_combustible }}</div>
                     <div class="small text-secondary mt-1">Auditado por GPS vs. Ralentí</div>
                 </div>
                 <span class="metric-icon text-warning"><i class="bi bi-fuel-pump"></i></span>
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="panel-card kpi-fin-card p-3 h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="metric-label">Utilidad Operativa Neta</div>
-                    <div class="metric-value mt-1 text-success" style="font-size:1.45rem;">S/ {{ total_utilidad_neta }}</div>
+                    <div class="metric-value mt-1 text-success" style="font-size:clamp(1.2rem, 3.5vw, 1.45rem);">S/ {{ total_utilidad_neta }}</div>
                     <div class="small text-secondary mt-1">Margen descontando combustible</div>
                 </div>
                 <span class="metric-icon"><i class="bi bi-wallet2"></i></span>
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="panel-card kpi-fin-card danger p-3 h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="metric-label">Demanda No Captada</div>
-                    <div class="metric-value mt-1 text-danger" style="font-size:1.45rem;">S/ {{ total_ingreso_perdido }}</div>
+                    <div class="metric-value mt-1 text-danger" style="font-size:clamp(1.2rem, 3.5vw, 1.45rem);">S/ {{ total_ingreso_perdido }}</div>
                     <div class="small text-danger mt-1"><i class="bi bi-exclamation-circle"></i> Por espera &gt; 10 min en paraderos</div>
                 </div>
                 <span class="metric-icon text-danger"><i class="bi bi-people-fill"></i></span>
