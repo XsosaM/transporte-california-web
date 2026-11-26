@@ -700,8 +700,8 @@
         const el = document.getElementById('map');
         el.innerHTML = '';
         lmap = L.map('map', { zoomControl: false, attributionControl: false }).setView([userLat || -8.1116, userLng || -79.0287], 15);
-        lDarkTiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
-        lLightTiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+        lDarkTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+        lLightTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
         (theme === 'dark' ? lDarkTiles : lLightTiles).addTo(lmap);
         if (userLat !== null) updateUserMarker(userLat, userLng, false);
     }
