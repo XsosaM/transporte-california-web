@@ -533,6 +533,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1olT6xID6J7pjteeQq3-W1jat4HuPoo4&language=es&region=PE"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 (function() {
@@ -631,11 +632,127 @@
         localStorage.setItem('truxigo_ios_tip_closed', '1');
     });
 
-    // 4. Tema Oscuro OLED (Predeterminado Concepto 2) + Tema Claro opcional
+    // 4. Mapa Google Maps API (con estilo OLED Carbon idéntico a Android + fallback automático)
     let theme = localStorage.getItem('truxigo_theme') || 'dark';
-    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.1116, -79.0287], 15);
-    const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
-    const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+    const DARK_MAP_STYLE = [
+        { elementType: "geometry", stylers: [{ color: "#0D0F16" }] },
+        { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#6E768A" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#0D0F16" }, { weight: 2.5 }] },
+        { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#222634" }] },
+        { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
+        { featureType: "poi", elementType: "geometry", stylers: [{ color: "#131620" }] },
+        { featureType: "poi", elementType: "labels.text", stylers: [{ visibility: "off" }] },
+        { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+        { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#111822" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#1B1E2B" }] },
+        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#25293A" }, { weight: 1.1 }] },
+        { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#7C8499" }] },
+        { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#232736" }] },
+        { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#2A2F42" }] },
+        { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#393F57" }, { weight: 1.4 }] },
+        { featureType: "transit", stylers: [{ visibility: "off" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#080A0F" }] }
+    ];
+    const LIGHT_MAP_STYLE = [
+        { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+        { featureType: "transit", stylers: [{ visibility: "off" }] }
+    ];
+
+    let mapEngine = 'google';
+    let gmap = null;
+    let lmap = null, lDarkTiles = null, lLightTiles = null;
+    let userLat = null, userLng = null, userSpeed = 0, userHeading = 0;
+    let userMarker = null;
+    const busMarkers = new Map();
+
+    function makeBusSvgIcon(label, isComm) {
+        const stroke = isComm ? '#FB923C' : '#A855F7';
+        const safeText = String(label).replace(/[<>&'"]/g, '');
+        const width = Math.max(118, safeText.length * 7.6 + 26);
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="32" viewBox="0 0 ${width} 32">`
+            + `<rect x="1.5" y="1.5" width="${width - 3}" height="29" rx="14.5" fill="#13151D" stroke="${stroke}" stroke-width="2.2"/>`
+            + `<text x="50%" y="20" text-anchor="middle" fill="#FFFFFF" font-family="Inter,Arial,sans-serif" font-size="11.5" font-weight="800">${safeText}</text>`
+            + `</svg>`;
+        return {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+            scaledSize: new google.maps.Size(width, 32),
+            anchor: new google.maps.Point(width / 2, 16)
+        };
+    }
+
+    function initFallbackLeaflet() {
+        if (mapEngine === 'leaflet' && lmap) return;
+        mapEngine = 'leaflet';
+        gmap = null;
+        userMarker = null;
+        busMarkers.clear();
+        const el = document.getElementById('map');
+        el.innerHTML = '';
+        lmap = L.map('map', { zoomControl: false, attributionControl: false }).setView([userLat || -8.1116, userLng || -79.0287], 15);
+        lDarkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+        lLightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+        (theme === 'dark' ? lDarkTiles : lLightTiles).addTo(lmap);
+        if (userLat !== null) updateUserMarker(userLat, userLng, false);
+    }
+
+    window.gm_authFailure = () => {
+        initFallbackLeaflet();
+    };
+
+    if (window.google && window.google.maps) {
+        gmap = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: -8.1116, lng: -79.0287 },
+            zoom: 15,
+            disableDefaultUI: true,
+            gestureHandling: 'greedy',
+            clickableIcons: false,
+            backgroundColor: theme === 'dark' ? '#0A0A0E' : '#FAFAFC',
+            styles: theme === 'dark' ? DARK_MAP_STYLE : LIGHT_MAP_STYLE
+        });
+    } else {
+        initFallbackLeaflet();
+    }
+
+    function setMapCenter(lat, lng, zoom) {
+        if (mapEngine === 'google' && gmap) {
+            gmap.panTo({ lat, lng });
+            if (zoom) gmap.setZoom(zoom);
+        } else if (lmap) {
+            lmap.setView([lat, lng], zoom || 15.5);
+        }
+    }
+
+    function updateUserMarker(lat, lng, centerFirst) {
+        if (mapEngine === 'google' && gmap) {
+            if (!userMarker) {
+                userMarker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: gmap,
+                    zIndex: 999,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: '#3B82F6',
+                        fillOpacity: 1,
+                        strokeColor: '#FFFFFF',
+                        strokeWeight: 3
+                    }
+                });
+                if (centerFirst) setMapCenter(lat, lng, 16);
+            } else {
+                userMarker.setPosition({ lat, lng });
+            }
+        } else if (lmap) {
+            if (!userMarker) {
+                const icon = L.divIcon({ className: '', html: '<div class="user-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+                userMarker = L.marker([lat, lng], { icon }).addTo(lmap);
+                if (centerFirst) setMapCenter(lat, lng, 15.5);
+            } else {
+                userMarker.setLatLng([lat, lng]);
+            }
+        }
+    }
 
     function applyTheme(t) {
         theme = t;
@@ -643,20 +760,25 @@
         localStorage.setItem('truxigo_theme', t);
         document.getElementById('meta-theme-color').setAttribute('content', t === 'dark' ? '#0A0A0E' : '#FAFAFC');
         document.getElementById('theme-icon').className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-        if (t === 'dark') {
-            if (map.hasLayer(lightTiles)) map.removeLayer(lightTiles);
-            darkTiles.addTo(map);
-        } else {
-            if (map.hasLayer(darkTiles)) map.removeLayer(darkTiles);
-            lightTiles.addTo(map);
+        if (mapEngine === 'google' && gmap) {
+            gmap.setOptions({
+                styles: t === 'dark' ? DARK_MAP_STYLE : LIGHT_MAP_STYLE,
+                backgroundColor: t === 'dark' ? '#0A0A0E' : '#FAFAFC'
+            });
+        } else if (lmap) {
+            if (t === 'dark') {
+                if (lmap.hasLayer(lLightTiles)) lmap.removeLayer(lLightTiles);
+                lDarkTiles.addTo(lmap);
+            } else {
+                if (lmap.hasLayer(lDarkTiles)) lmap.removeLayer(lDarkTiles);
+                lLightTiles.addTo(lmap);
+            }
         }
     }
     applyTheme(theme);
     document.getElementById('btn-theme').addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'));
 
     // 5. GPS Real del iPhone / Móvil
-    let userLat = null, userLng = null, userSpeed = 0, userHeading = 0;
-    let userMarker = null;
     const gpsSub = document.getElementById('gps-subtitle');
 
     if ('geolocation' in navigator) {
@@ -667,13 +789,7 @@
                 userSpeed = pos.coords.speed && pos.coords.speed > 0 ? pos.coords.speed * 3.6 : 0;
                 userHeading = pos.coords.heading ? Math.round(pos.coords.heading) : 0;
                 gpsSub.textContent = 'Tránsito de Trujillo · GPS en vivo';
-                if (!userMarker) {
-                    const icon = L.divIcon({ className: '', html: '<div class="user-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
-                    userMarker = L.marker([userLat, userLng], { icon }).addTo(map);
-                    map.setView([userLat, userLng], 15.5);
-                } else {
-                    userMarker.setLatLng([userLat, userLng]);
-                }
+                updateUserMarker(userLat, userLng, true);
             },
             () => { gpsSub.textContent = 'Tránsito de Trujillo · Activa tu GPS'; },
             { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
@@ -681,7 +797,7 @@
     }
 
     document.getElementById('btn-center').addEventListener('click', () => {
-        if (userLat !== null) map.setView([userLat, userLng], 16);
+        if (userLat !== null) setMapCenter(userLat, userLng, 16);
     });
 
     // 6. Estado Modo A Bordo (Crowdsourcing)
@@ -780,7 +896,6 @@
     };
 
     // 7. Polling de Buses Reales (0 datos falsos)
-    const busMarkers = new Map();
     const sheetContent = document.getElementById('sheet-content');
 
     function renderSheet(unidades) {
@@ -853,23 +968,40 @@
                 const key = String(u.viajeId || u.unidadId || u.placa);
                 activeIds.add(key);
                 const isComm = String(u.placa || '').toUpperCase() === 'COMUNIDAD';
-                const label = isComm ? `🚌 R-${u.letra} · Comunidad` : `🚌 R-${u.letra} · ${u.placa}`;
-                const icon = L.divIcon({
-                    className: '',
-                    html: `<div class="bus-pin ${isComm ? 'community' : ''}">${label}</div>`,
-                    iconSize: [120, 28],
-                    iconAnchor: [60, 14]
-                });
-                if (busMarkers.has(key)) {
-                    busMarkers.get(key).setLatLng([u.lat, u.lng]).setIcon(icon);
-                } else {
-                    const m = L.marker([u.lat, u.lng], { icon }).addTo(map);
-                    busMarkers.set(key, m);
+                const label = isComm ? `R-${u.letra} · Comunidad` : `R-${u.letra} · ${u.placa}`;
+                if (mapEngine === 'google' && gmap) {
+                    const icon = makeBusSvgIcon(label, isComm);
+                    if (busMarkers.has(key)) {
+                        const m = busMarkers.get(key);
+                        m.setPosition({ lat: u.lat, lng: u.lng });
+                        m.setIcon(icon);
+                    } else {
+                        const m = new google.maps.Marker({
+                            position: { lat: u.lat, lng: u.lng },
+                            map: gmap,
+                            icon
+                        });
+                        busMarkers.set(key, m);
+                    }
+                } else if (lmap) {
+                    const icon = L.divIcon({
+                        className: '',
+                        html: `<div class="bus-pin ${isComm ? 'community' : ''}">🚌 ${label}</div>`,
+                        iconSize: [120, 28],
+                        iconAnchor: [60, 14]
+                    });
+                    if (busMarkers.has(key)) {
+                        busMarkers.get(key).setLatLng([u.lat, u.lng]).setIcon(icon);
+                    } else {
+                        const m = L.marker([u.lat, u.lng], { icon }).addTo(lmap);
+                        busMarkers.set(key, m);
+                    }
                 }
             });
             for (const [k, m] of busMarkers.entries()) {
                 if (!activeIds.has(k)) {
-                    map.removeLayer(m);
+                    if (mapEngine === 'google' && m.setMap) m.setMap(null);
+                    else if (lmap) lmap.removeLayer(m);
                     busMarkers.delete(k);
                 }
             }
