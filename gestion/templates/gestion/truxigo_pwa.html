@@ -118,11 +118,18 @@
             to { transform: scaleX(1); }
         }
 
-        /* Mapa pantalla completa */
-        #map {
+        /* Mapa pantalla completa (wrapper evita que Google Maps sobreescriba position:fixed) */
+        #map-wrap {
             position: fixed;
             inset: 0;
+            width: 100%;
+            height: 100%;
             z-index: 1;
+            background: var(--bg);
+        }
+        #map {
+            width: 100%;
+            height: 100%;
             background: var(--bg);
         }
         .leaflet-control-attribution { display: none !important; }
@@ -427,7 +434,7 @@
 </div>
 
 <!-- Mapa -->
-<div id="map"></div>
+<div id="map-wrap"><div id="map"></div></div>
 
 <!-- Controles Superiores -->
 <div class="top-overlay">
