@@ -1342,3 +1342,48 @@ def truxigo_pwa_colaborativo(request):
     return JsonResponse({"ok": False, "error": "Método no permitido"}, status=405)
 
 
+@csrf_exempt
+def truxigo_pwa_pasajero_esperando(request):
+    """Proxy mismo-origen para reportar/retirar presencia de pasajero iOS esperando en el mapa del conductor."""
+    import urllib.request
+    from django.conf import settings
+
+    base = getattr(settings, "TRANSPORTE_API_BASE_URL", "https://transporte-california-api.onrender.com/api/v1").rstrip("/")
+    api_key = getattr(settings, "TRANSPORTE_APP_API_KEY", "transport_api_key_dev_9a8f7c6e5d4b3a2f1e0d9c8b7a6f5e4d")
+
+    if request.method == "POST":
+        try:
+            raw_body = request.body or b"{}"
+            req = urllib.request.Request(
+                f"{base}/unidades/pasajeros-esperando",
+                data=raw_body,
+                method="POST",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-API-Key": api_key,
+                },
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                payload = json.loads(resp.read().decode("utf-8") or "{}")
+                return JsonResponse({"ok": True, "pasajero": payload})
+        except Exception as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=502)
+
+    if request.method == "DELETE":
+        pasajero_key = (request.GET.get("pasajeroKey") or "").strip()
+        if not pasajero_key:
+            return JsonResponse({"ok": False, "error": "pasajeroKey requerido"}, status=400)
+        try:
+            req = urllib.request.Request(
+                f"{base}/unidades/pasajeros-esperando/{quote(pasajero_key)}",
+                method="DELETE",
+                headers={"X-API-Key": api_key},
+            )
+            with urllib.request.urlopen(req, timeout=15):
+                return JsonResponse({"ok": True})
+        except Exception as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=502)
+
+    return JsonResponse({"ok": False, "error": "Método no permitido"}, status=405)
+
+

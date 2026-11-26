@@ -62,4 +62,5 @@ urlpatterns = [
     path("truxigo/sw.js", views.truxigo_pwa_sw, name="truxigo_pwa_sw"),
     path("truxigo/api/posiciones/", views.truxigo_pwa_posiciones, name="truxigo_pwa_posiciones"),
     path("truxigo/api/colaborativo/", views.truxigo_pwa_colaborativo, name="truxigo_pwa_colaborativo"),
+    path("truxigo/api/pasajero-esperando/", views.truxigo_pwa_pasajero_esperando, name="truxigo_pwa_pasajero_esperando"),
 ]

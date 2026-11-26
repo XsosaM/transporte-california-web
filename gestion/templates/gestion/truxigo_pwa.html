@@ -580,6 +580,7 @@
         auth.getRedirectResult().catch(() => {});
         auth.onAuthStateChanged((user) => {
             if (user) {
+                window.__truxigoDisplayName = user.displayName || 'Pasajero iOS';
                 loggedOutBox.style.display = 'none';
                 loggedInBox.style.display = 'block';
                 document.getElementById('profile-name').textContent = user.displayName || 'Usuario TruxiGo';
@@ -591,6 +592,7 @@
                     document.getElementById('profile-photo').src = user.photoURL;
                 }
             } else {
+                window.__truxigoDisplayName = null;
                 loggedOutBox.style.display = 'block';
                 loggedInBox.style.display = 'none';
                 accAvatar.style.display = 'none';
@@ -863,25 +865,43 @@
     document.getElementById('close-modal').onclick = () => modal.classList.remove('open');
     modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('open'); };
 
-    async function sendOnBoardPing() {
-        if (!isOnBoard || userLat === null) return;
+    async function sendPresencePing() {
+        if (userLat === null) return;
         try {
-            await fetch('/truxigo/api/colaborativo/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionKey,
-                    rutaId: selRutaId,
-                    letra: selLetra,
-                    sentido: selSentido,
-                    color: '#A855F7',
-                    lat: userLat,
-                    lng: userLng,
-                    velocidadKmh: userSpeed,
-                    rumboGrados: userHeading,
-                    ocupacion: selOcup
-                })
-            });
+            if (isOnBoard) {
+                await fetch('/truxigo/api/colaborativo/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionKey,
+                        rutaId: selRutaId,
+                        letra: selLetra,
+                        sentido: selSentido,
+                        color: '#A855F7',
+                        lat: userLat,
+                        lng: userLng,
+                        velocidadKmh: userSpeed,
+                        rumboGrados: userHeading,
+                        ocupacion: selOcup
+                    })
+                });
+            } else {
+                const nombre = window.__truxigoDisplayName || ('Pasajero iOS #' + sessionKey.slice(-4).toUpperCase());
+                await fetch('/truxigo/api/pasajero-esperando/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pasajeroKey: sessionKey,
+                        nombre,
+                        rutaId: selRutaId,
+                        letra: selLetra,
+                        lat: userLat,
+                        lng: userLng,
+                        cantidadPersonas: 1,
+                        paraderoCercano: 'En ruta · Trujillo'
+                    })
+                });
+            }
         } catch (_) {}
     }
 
@@ -890,7 +910,10 @@
         chipOnBoard.className = 'chip live';
         chipText.textContent = 'A bordo · Ruta ' + selLetra;
         modal.classList.remove('open');
-        await sendOnBoardPing();
+        try {
+            await fetch('/truxigo/api/pasajero-esperando/?pasajeroKey=' + encodeURIComponent(sessionKey), { method: 'DELETE' });
+        } catch (_) {}
+        await sendPresencePing();
         await fetchLiveBuses();
     };
 
@@ -902,8 +925,16 @@
         try {
             await fetch('/truxigo/api/colaborativo/?sessionKey=' + encodeURIComponent(sessionKey), { method: 'DELETE' });
         } catch (_) {}
+        await sendPresencePing();
         await fetchLiveBuses();
     };
+
+    window.addEventListener('pagehide', () => {
+        fetch('/truxigo/api/pasajero-esperando/?pasajeroKey=' + encodeURIComponent(sessionKey), { method: 'DELETE', keepalive: true }).catch(() => {});
+        if (isOnBoard) {
+            fetch('/truxigo/api/colaborativo/?sessionKey=' + encodeURIComponent(sessionKey), { method: 'DELETE', keepalive: true }).catch(() => {});
+        }
+    });
 
     // 7. Polling de Buses Reales (0 datos falsos)
     const sheetContent = document.getElementById('sheet-content');
@@ -1022,7 +1053,7 @@
     renderSheet([]);
     fetchLiveBuses();
     setInterval(() => {
-        sendOnBoardPing();
+        sendPresencePing();
         fetchLiveBuses();
     }, 3000);
 })();
