@@ -439,6 +439,10 @@
         </div>
         <button class="icon-btn" id="btn-center" title="Centrar GPS"><i class="bi bi-crosshair"></i></button>
         <button class="icon-btn" id="btn-theme" title="Cambiar tema"><i class="bi bi-sun-fill" id="theme-icon"></i></button>
+        <button class="icon-btn" id="btn-account" title="Cuenta Google" style="overflow:hidden;padding:0;">
+            <i class="bi bi-person-fill" id="account-icon"></i>
+            <img id="account-avatar" src="" alt="Perfil" style="display:none;width:100%;height:100%;object-fit:cover;">
+        </button>
     </div>
 
     <div class="chips-row">
@@ -496,6 +500,39 @@
     </div>
 </div>
 
+<!-- Modal Cuenta & Continuar con Google (Firebase Auth iOS/Web) -->
+<div class="modal-backdrop" id="account-modal">
+    <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="margin:0;font-size:19px;font-weight:800;">Tu cuenta TruxiGo</h2>
+            <button class="icon-btn" id="close-account-modal"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div id="account-logged-out" style="margin-top:16px;">
+            <p style="margin:0 0 18px;font-size:13px;color:var(--muted);line-height:1.45;">
+                Inicia sesión con tu cuenta de Google para sincronizar tu perfil y tus viajes entre iPhone y Android.
+            </p>
+            <button id="btn-google-login" style="width:100%;height:52px;border-radius:26px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;">
+                <span style="font-size:19px;font-weight:900;color:#4285F4;">G</span>
+                <span>Continuar con Google</span>
+            </button>
+            <p id="google-auth-error" style="display:none;margin:10px 0 0;font-size:12px;color:#F87171;text-align:center;"></p>
+        </div>
+        <div id="account-logged-in" style="display:none;margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:var(--surface-2);border:1px solid var(--border);">
+                <img id="profile-photo" src="" alt="" style="width:46px;height:46px;border-radius:50%;object-fit:cover;">
+                <div style="min-width:0;flex:1;">
+                    <div id="profile-name" style="font-size:15px;font-weight:800;color:var(--text);"></div>
+                    <div id="profile-email" style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;"></div>
+                </div>
+            </div>
+            <button class="cta-danger" id="btn-google-logout">Cerrar sesión</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 (function() {
@@ -503,6 +540,73 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/truxigo/sw.js').catch(() => {});
     }
+
+    // 1.5 Firebase Auth (Google Sign-In gratuito para iOS Safari y PWA)
+    try {
+        firebase.initializeApp({
+            apiKey: "AIzaSyCqS_IjbdCwVldVuTCEzlwi8tqvMWQBKx0",
+            authDomain: "truxigo.firebaseapp.com",
+            projectId: "truxigo",
+            storageBucket: "truxigo.firebasestorage.app",
+            messagingSenderId: "466447438772",
+            appId: "1:466447438772:web:8f2cf002e2362ecde4d8e1"
+        });
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        const accModal = document.getElementById('account-modal');
+        const btnAcc = document.getElementById('btn-account');
+        const accIcon = document.getElementById('account-icon');
+        const accAvatar = document.getElementById('account-avatar');
+        const loggedOutBox = document.getElementById('account-logged-out');
+        const loggedInBox = document.getElementById('account-logged-in');
+        const errBox = document.getElementById('google-auth-error');
+
+        btnAcc.onclick = () => { errBox.style.display = 'none'; accModal.classList.add('open'); };
+        document.getElementById('close-account-modal').onclick = () => accModal.classList.remove('open');
+        accModal.onclick = (e) => { if (e.target === accModal) accModal.classList.remove('open'); };
+
+        auth.getRedirectResult().catch(() => {});
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loggedOutBox.style.display = 'none';
+                loggedInBox.style.display = 'block';
+                document.getElementById('profile-name').textContent = user.displayName || 'Usuario TruxiGo';
+                document.getElementById('profile-email').textContent = user.email || '';
+                if (user.photoURL) {
+                    accAvatar.src = user.photoURL;
+                    accAvatar.style.display = 'block';
+                    accIcon.style.display = 'none';
+                    document.getElementById('profile-photo').src = user.photoURL;
+                }
+            } else {
+                loggedOutBox.style.display = 'block';
+                loggedInBox.style.display = 'none';
+                accAvatar.style.display = 'none';
+                accIcon.style.display = 'inline';
+            }
+        });
+
+        document.getElementById('btn-google-login').onclick = async () => {
+            errBox.style.display = 'none';
+            try {
+                await auth.signInWithPopup(provider);
+                accModal.classList.remove('open');
+            } catch (err) {
+                if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
+                    auth.signInWithRedirect(provider);
+                } else {
+                    errBox.textContent = err.message || 'No se pudo iniciar sesión con Google.';
+                    errBox.style.display = 'block';
+                }
+            }
+        };
+
+        document.getElementById('btn-google-logout').onclick = async () => {
+            await auth.signOut();
+            accModal.classList.remove('open');
+        };
+    } catch (_) {}
 
     // 2. Splash Screen solo en apertura en frío (sessionStorage)
     const splashEl = document.getElementById('splash');
