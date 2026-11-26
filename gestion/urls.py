@@ -56,4 +56,10 @@ urlpatterns = [
     path("api/whatsapp-consulta/", views.whatsapp_consulta_api, name="whatsapp_consulta_api"),
     path("api/ocupacion/", views.actualizar_ocupacion_view, name="actualizar_ocupacion_api"),
     path("api/paraderos-seguros/", views.paraderos_seguros_api, name="paraderos_seguros_api"),
+    # App Pasajero Instalable para iOS (iPhone / Safari PWA) y Móviles
+    path("truxigo/", views.truxigo_pwa_view, name="truxigo_pwa"),
+    path("truxigo/manifest.json", views.truxigo_pwa_manifest, name="truxigo_pwa_manifest"),
+    path("truxigo/sw.js", views.truxigo_pwa_sw, name="truxigo_pwa_sw"),
+    path("truxigo/api/posiciones/", views.truxigo_pwa_posiciones, name="truxigo_pwa_posiciones"),
+    path("truxigo/api/colaborativo/", views.truxigo_pwa_colaborativo, name="truxigo_pwa_colaborativo"),
 ]

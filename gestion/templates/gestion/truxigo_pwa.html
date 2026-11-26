@@ -1,0 +1,785 @@
+{% load static %}
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>TruxiGo · Tránsito de Trujillo</title>
+
+    <!-- Configuración oficial PWA para iPhone (iOS Safari Standalone) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TruxiGo">
+    <meta name="theme-color" content="#0A0A0E" id="meta-theme-color">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/truxigo_icon_180.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'img/truxigo_icon_180.png' %}">
+    <link rel="manifest" href="{% url 'truxigo_pwa_manifest' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+
+    <style>
+        :root {
+            --bg: #0A0A0E;
+            --surface: #13151D;
+            --surface-2: #1A1C26;
+            --border: #2A2E3D;
+            --text: #F8FAFC;
+            --muted: #8A90A2;
+            --primary: #A855F7;
+            --primary-solid: #9333EA;
+            --coral: #FB923C;
+            --coral-text: #140C04;
+            --gradient: linear-gradient(90deg, #9333EA 0%, #B967FF 50%, #FB923C 100%);
+        }
+        [data-theme="light"] {
+            --bg: #FAFAFC;
+            --surface: #FFFFFF;
+            --surface-2: #F3F4F8;
+            --border: #E2E8F0;
+            --text: #090D16;
+            --muted: #64748B;
+            --primary: #7C3AED;
+            --primary-solid: #7C3AED;
+            --coral: #F97316;
+            --coral-text: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Splash Screen (solo apertura en frío) */
+        #splash {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        #splash.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .splash-pill {
+            background: #FFFFFF;
+            border-radius: 22px;
+            padding: 14px 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .splash-pill img {
+            height: 48px;
+            width: auto;
+            display: block;
+        }
+        .splash-sub {
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        .splash-bar {
+            margin-top: 28px;
+            width: 130px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--surface-2);
+            overflow: hidden;
+        }
+        .splash-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--gradient);
+            transform-origin: left;
+            animation: splashLoad 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes splashLoad {
+            from { transform: scaleX(0.08); }
+            to { transform: scaleX(1); }
+        }
+
+        /* Mapa pantalla completa */
+        #map {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background: var(--bg);
+        }
+        .leaflet-control-attribution { display: none !important; }
+
+        /* Barra Superior Minimalista */
+        .top-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            padding: calc(env(safe-area-inset-top, 12px) + 10px) 14px 0;
+            pointer-events: none;
+        }
+        .top-bar {
+            pointer-events: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-title {
+            flex: 1;
+            min-width: 0;
+        }
+        .top-title h1 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .top-title p {
+            margin: 1px 0 0;
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Fila de Chips */
+        .chips-row {
+            pointer-events: auto;
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 4px;
+        }
+        .chips-row::-webkit-scrollbar { display: none; }
+        .chip {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 18px;
+            padding: 7px 13px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .chip.primary {
+            background: var(--primary-solid);
+            border-color: var(--primary-solid);
+            color: #FFFFFF;
+        }
+        .chip.live {
+            background: var(--coral);
+            border-color: var(--coral);
+            color: var(--coral-text);
+        }
+
+        /* Banner sutil de instalación en iPhone (solo si no está instalada en pantalla de inicio) */
+        .ios-install-banner {
+            pointer-events: auto;
+            margin-top: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 9px 12px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+        .ios-install-banner strong { color: var(--text); }
+
+        /* Bottom Sheet Minimalista (Concepto 2 OLED Carbon) */
+        .bottom-sheet {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 25;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-radius: 28px 28px 0 0;
+            padding: 12px 20px calc(env(safe-area-inset-bottom, 14px) + 14px);
+        }
+        .sheet-handle {
+            width: 38px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            margin: 0 auto 14px;
+        }
+        .pills-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .pill-badge {
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .pill-coral { background: var(--coral); color: var(--coral-text); }
+        .pill-purple { background: var(--primary-solid); color: #FFFFFF; cursor: pointer; }
+        .pill-neutral { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+
+        .sheet-title {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .sheet-sub {
+            margin: 3px 0 14px;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        .metrics-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .metric-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .metric-col.left { align-items: flex-start; }
+        .metric-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+        .metric-val { font-size: 18px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; margin-top: 2px; }
+        .metric-val.lg { font-size: 20px; }
+        .metric-divider { width: 1px; height: 34px; background: var(--border); }
+
+        .empty-cta {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 13px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .empty-cta i { font-size: 20px; color: var(--primary); }
+        .empty-cta h3 { margin: 0; font-size: 13px; font-weight: 700; color: var(--text); }
+        .empty-cta p { margin: 2px 0 0; font-size: 11px; color: var(--muted); line-height: 1.35; }
+
+        /* Modal Modo A Bordo */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: flex-end;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal-sheet {
+            width: 100%;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-radius: 26px 26px 0 0;
+            padding: 14px 22px calc(env(safe-area-inset-bottom, 16px) + 16px);
+        }
+        .field-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            margin: 14px 0 8px;
+        }
+        .opt-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .opt-btn {
+            flex: 1;
+            min-width: 72px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+        }
+        .opt-btn.active {
+            background: var(--primary-solid);
+            border-color: var(--primary-solid);
+            color: #FFFFFF;
+        }
+        .cta-gradient {
+            margin-top: 20px;
+            width: 100%;
+            height: 52px;
+            border: none;
+            border-radius: 26px;
+            background: var(--gradient);
+            color: #FFFFFF;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .cta-danger {
+            margin-top: 20px;
+            width: 100%;
+            height: 52px;
+            border: 1px solid #EF4444;
+            border-radius: 26px;
+            background: transparent;
+            color: #EF4444;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* Marcador GPS usuario */
+        .user-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3B82F6;
+            border: 3px solid #FFFFFF;
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.25);
+        }
+        .bus-pin {
+            background: #13151D;
+            color: #FFFFFF;
+            border: 2px solid #A855F7;
+            border-radius: 16px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+        }
+        .bus-pin.community { border-color: #FB923C; }
+    </style>
+</head>
+<body>
+
+<!-- Splash Screen de apertura en frío -->
+<div id="splash">
+    <div class="splash-pill">
+        <img src="{% static 'img/truxigo_icon_512.png' %}" alt="TruxiGo">
+    </div>
+    <div class="splash-sub">Tránsito de Trujillo · iOS &amp; Web</div>
+    <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- Mapa -->
+<div id="map"></div>
+
+<!-- Controles Superiores -->
+<div class="top-overlay">
+    <div class="top-bar">
+        <i class="bi bi-bus-front-fill" style="color:var(--primary);font-size:20px;"></i>
+        <div class="top-title">
+            <h1>TruxiGo</h1>
+            <p id="gps-subtitle">Tránsito de Trujillo · Buscando GPS...</p>
+        </div>
+        <button class="icon-btn" id="btn-center" title="Centrar GPS"><i class="bi bi-crosshair"></i></button>
+        <button class="icon-btn" id="btn-theme" title="Cambiar tema"><i class="bi bi-sun-fill" id="theme-icon"></i></button>
+    </div>
+
+    <div class="chips-row">
+        <button class="chip primary" id="chip-onboard">
+            <i class="bi bi-broadcast"></i>
+            <span id="chip-onboard-text">Voy a bordo</span>
+        </button>
+        <button class="chip" id="chip-refresh">
+            <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+    </div>
+
+    <div class="ios-install-banner" id="ios-banner">
+        <span><i class="bi bi-phone"></i> <strong>Instala TruxiGo en iPhone:</strong> toca <strong>Compartir</strong> <i class="bi bi-box-arrow-up"></i> → <strong>Agregar a inicio</strong></span>
+        <i class="bi bi-x-lg" id="close-ios-banner" style="cursor:pointer;padding:4px;"></i>
+    </div>
+</div>
+
+<!-- Panel Inferior (Concepto 2 OLED Carbon) -->
+<div class="bottom-sheet" id="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div id="sheet-content"></div>
+</div>
+
+<!-- Modal Modo A Bordo -->
+<div class="modal-backdrop" id="onboard-modal">
+    <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="margin:0;font-size:19px;font-weight:800;">Modo A Bordo (Comunidad)</h2>
+            <button class="icon-btn" id="close-modal"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <p style="margin:4px 0 0;font-size:12px;color:var(--muted);">
+            Comparte de forma anónima la ubicación del micro donde viajas para ayudar a otros pasajeros en Trujillo.
+        </p>
+
+        <div class="field-label">¿En qué ruta estás viajando?</div>
+        <div class="opt-row" id="route-opts"></div>
+
+        <div class="field-label">Sentido del recorrido</div>
+        <div class="opt-row" id="dir-opts">
+            <button class="opt-btn active" data-val="IDA">IDA</button>
+            <button class="opt-btn" data-val="VUELTA">VUELTA</button>
+        </div>
+
+        <div class="field-label">¿Cómo viene de asientos?</div>
+        <div class="opt-row" id="occ-opts">
+            <button class="opt-btn active" data-val="LIBRE">Libre</button>
+            <button class="opt-btn" data-val="DE_PIE">De pie</button>
+            <button class="opt-btn" data-val="LLENO">Lleno</button>
+        </div>
+
+        <button class="cta-gradient" id="btn-start-onboard">Compartir ubicación del bus en vivo</button>
+        <button class="cta-danger" id="btn-stop-onboard" style="display:none;">Ya bajé del bus (Dejar de compartir)</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function() {
+    // 1. Registrar Service Worker PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/truxigo/sw.js').catch(() => {});
+    }
+
+    // 2. Splash Screen solo en apertura en frío (sessionStorage)
+    const splashEl = document.getElementById('splash');
+    if (sessionStorage.getItem('truxigo_splash_shown') === '1') {
+        splashEl.style.display = 'none';
+    } else {
+        setTimeout(() => {
+            splashEl.classList.add('hidden');
+            sessionStorage.setItem('truxigo_splash_shown', '1');
+        }, 1450);
+    }
+
+    // 3. Banner de instalación en iOS Safari si aún no está instalada en pantalla de inicio
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const iosBanner = document.getElementById('ios-banner');
+    if (isIOS && !isStandalone && !localStorage.getItem('truxigo_ios_tip_closed')) {
+        iosBanner.style.display = 'flex';
+    }
+    document.getElementById('close-ios-banner').addEventListener('click', () => {
+        iosBanner.style.display = 'none';
+        localStorage.setItem('truxigo_ios_tip_closed', '1');
+    });
+
+    // 4. Tema Oscuro OLED (Predeterminado Concepto 2) + Tema Claro opcional
+    let theme = localStorage.getItem('truxigo_theme') || 'dark';
+    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.1116, -79.0287], 15);
+    const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+    const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+
+    function applyTheme(t) {
+        theme = t;
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('truxigo_theme', t);
+        document.getElementById('meta-theme-color').setAttribute('content', t === 'dark' ? '#0A0A0E' : '#FAFAFC');
+        document.getElementById('theme-icon').className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        if (t === 'dark') {
+            if (map.hasLayer(lightTiles)) map.removeLayer(lightTiles);
+            darkTiles.addTo(map);
+        } else {
+            if (map.hasLayer(darkTiles)) map.removeLayer(darkTiles);
+            lightTiles.addTo(map);
+        }
+    }
+    applyTheme(theme);
+    document.getElementById('btn-theme').addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'));
+
+    // 5. GPS Real del iPhone / Móvil
+    let userLat = null, userLng = null, userSpeed = 0, userHeading = 0;
+    let userMarker = null;
+    const gpsSub = document.getElementById('gps-subtitle');
+
+    if ('geolocation' in navigator) {
+        navigator.geolocation.watchPosition(
+            (pos) => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                userSpeed = pos.coords.speed && pos.coords.speed > 0 ? pos.coords.speed * 3.6 : 0;
+                userHeading = pos.coords.heading ? Math.round(pos.coords.heading) : 0;
+                gpsSub.textContent = 'Tránsito de Trujillo · GPS en vivo';
+                if (!userMarker) {
+                    const icon = L.divIcon({ className: '', html: '<div class="user-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+                    userMarker = L.marker([userLat, userLng], { icon }).addTo(map);
+                    map.setView([userLat, userLng], 15.5);
+                } else {
+                    userMarker.setLatLng([userLat, userLng]);
+                }
+            },
+            () => { gpsSub.textContent = 'Tránsito de Trujillo · Activa tu GPS'; },
+            { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+        );
+    }
+
+    document.getElementById('btn-center').addEventListener('click', () => {
+        if (userLat !== null) map.setView([userLat, userLng], 16);
+    });
+
+    // 6. Estado Modo A Bordo (Crowdsourcing)
+    const sessionKey = localStorage.getItem('truxigo_session_key') || ('ios-' + Math.random().toString(36).slice(2, 10));
+    localStorage.setItem('truxigo_session_key', sessionKey);
+
+    let isOnBoard = false;
+    let selRutaId = 1, selLetra = 'A', selSentido = 'IDA', selOcup = 'LIBRE';
+    const rutasDb = JSON.parse('{{ rutas_json|escapejs }}' || '[]');
+    const routeOpts = document.getElementById('route-opts');
+    const opcionesRutas = rutasDb.length > 0
+        ? rutasDb.slice(0, 6).map(r => ({ id: r.id, letra: (r.code || 'A').replace(/[^A-Za-z0-9]/g, '').slice(0, 4) || 'A' }))
+        : [{ id: 1, letra: 'A' }, { id: 2, letra: 'B' }, { id: 3, letra: 'C' }];
+
+    opcionesRutas.forEach((r, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn' + (idx === 0 ? ' active' : '');
+        btn.textContent = 'Ruta ' + r.letra;
+        btn.onclick = () => {
+            routeOpts.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selRutaId = r.id;
+            selLetra = r.letra;
+        };
+        routeOpts.appendChild(btn);
+    });
+
+    function bindGroup(id, setter) {
+        const el = document.getElementById(id);
+        el.querySelectorAll('.opt-btn').forEach(btn => {
+            btn.onclick = () => {
+                el.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                setter(btn.dataset.val);
+            };
+        });
+    }
+    bindGroup('dir-opts', v => selSentido = v);
+    bindGroup('occ-opts', v => selOcup = v);
+
+    const modal = document.getElementById('onboard-modal');
+    const chipOnBoard = document.getElementById('chip-onboard');
+    const chipText = document.getElementById('chip-onboard-text');
+    const btnStart = document.getElementById('btn-start-onboard');
+    const btnStop = document.getElementById('btn-stop-onboard');
+
+    function openOnBoardModal() {
+        btnStart.style.display = isOnBoard ? 'none' : 'block';
+        btnStop.style.display = isOnBoard ? 'block' : 'none';
+        modal.classList.add('open');
+    }
+    chipOnBoard.onclick = openOnBoardModal;
+    document.getElementById('close-modal').onclick = () => modal.classList.remove('open');
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('open'); };
+
+    async function sendOnBoardPing() {
+        if (!isOnBoard || userLat === null) return;
+        try {
+            await fetch('/truxigo/api/colaborativo/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionKey,
+                    rutaId: selRutaId,
+                    letra: selLetra,
+                    sentido: selSentido,
+                    color: '#A855F7',
+                    lat: userLat,
+                    lng: userLng,
+                    velocidadKmh: userSpeed,
+                    rumboGrados: userHeading,
+                    ocupacion: selOcup
+                })
+            });
+        } catch (_) {}
+    }
+
+    btnStart.onclick = async () => {
+        isOnBoard = true;
+        chipOnBoard.className = 'chip live';
+        chipText.textContent = 'A bordo · Ruta ' + selLetra;
+        modal.classList.remove('open');
+        await sendOnBoardPing();
+        await fetchLiveBuses();
+    };
+
+    btnStop.onclick = async () => {
+        isOnBoard = false;
+        chipOnBoard.className = 'chip primary';
+        chipText.textContent = 'Voy a bordo';
+        modal.classList.remove('open');
+        try {
+            await fetch('/truxigo/api/colaborativo/?sessionKey=' + encodeURIComponent(sessionKey), { method: 'DELETE' });
+        } catch (_) {}
+        await fetchLiveBuses();
+    };
+
+    // 7. Polling de Buses Reales (0 datos falsos)
+    const busMarkers = new Map();
+    const sheetContent = document.getElementById('sheet-content');
+
+    function renderSheet(unidades) {
+        if (!unidades || unidades.length === 0) {
+            sheetContent.innerHTML = `
+                <div class="pills-header">
+                    <span class="pill-badge pill-neutral"><i class="bi bi-bus-front"></i> Sin unidades activas</span>
+                    <span class="pill-badge pill-purple" id="sheet-onboard-pill">Voy a bordo</span>
+                </div>
+                <h2 class="sheet-title">0 buses en ruta ahora</h2>
+                <p class="sheet-sub">Tránsito de Trujillo · Esperando salida de unidades</p>
+                <div class="empty-cta" id="sheet-empty-cta">
+                    <i class="bi bi-broadcast"></i>
+                    <div>
+                        <h3>¿Ya estás dentro de un micro?</h3>
+                        <p>Toca aquí para activar 'Voy a bordo' y compartir su ubicación real en vivo con la comunidad de Trujillo.</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('sheet-onboard-pill').onclick = openOnBoardModal;
+            document.getElementById('sheet-empty-cta').onclick = openOnBoardModal;
+            return;
+        }
+
+        const bus = unidades[0];
+        const isComm = String(bus.placa || '').toUpperCase() === 'COMUNIDAD';
+        const title = isComm ? `Ruta ${bus.letra} · Comunidad en vivo` : `Unidad ${bus.placa || 'En ruta'} · Ruta ${bus.letra}`;
+        const sub = isComm
+            ? `Compartido por pasajero a bordo · Próx.: ${bus.proximoParadero || 'En recorrido'}`
+            : `GPS Oficial · Próx.: ${bus.proximoParadero || 'En recorrido'}`;
+
+        sheetContent.innerHTML = `
+            <div class="pills-header">
+                <span class="pill-badge pill-coral"><i class="bi bi-broadcast"></i> En vivo (${unidades.length})</span>
+                <span class="pill-badge pill-purple">Ruta ${bus.letra}</span>
+            </div>
+            <h2 class="sheet-title">${title}</h2>
+            <p class="sheet-sub">${sub}</p>
+            <div class="metrics-box">
+                <div class="metric-col left">
+                    <span class="metric-label">Llegada est.</span>
+                    <span class="metric-val lg">${bus.etaMin || 1} min</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-col">
+                    <span class="metric-label">Vel.</span>
+                    <span class="metric-val">${Math.round(bus.velocidadKmh || 0)} km/h</span>
+                </div>
+                <div class="metric-col">
+                    <span class="metric-label">Sentido</span>
+                    <span class="metric-val">${bus.sentido || 'IDA'}</span>
+                </div>
+                <div class="metric-col">
+                    <span class="metric-label">Estado</span>
+                    <span class="metric-val">${bus.ocupacion || 'LIBRE'}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    async function fetchLiveBuses() {
+        try {
+            const resp = await fetch('/truxigo/api/posiciones/');
+            const data = await resp.json();
+            const unidades = data.unidades || [];
+            renderSheet(unidades);
+
+            const activeIds = new Set();
+            unidades.forEach(u => {
+                const key = String(u.viajeId || u.unidadId || u.placa);
+                activeIds.add(key);
+                const isComm = String(u.placa || '').toUpperCase() === 'COMUNIDAD';
+                const label = isComm ? `🚌 R-${u.letra} · Comunidad` : `🚌 R-${u.letra} · ${u.placa}`;
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div class="bus-pin ${isComm ? 'community' : ''}">${label}</div>`,
+                    iconSize: [120, 28],
+                    iconAnchor: [60, 14]
+                });
+                if (busMarkers.has(key)) {
+                    busMarkers.get(key).setLatLng([u.lat, u.lng]).setIcon(icon);
+                } else {
+                    const m = L.marker([u.lat, u.lng], { icon }).addTo(map);
+                    busMarkers.set(key, m);
+                }
+            });
+            for (const [k, m] of busMarkers.entries()) {
+                if (!activeIds.has(k)) {
+                    map.removeLayer(m);
+                    busMarkers.delete(k);
+                }
+            }
+        } catch (_) {}
+    }
+
+    document.getElementById('chip-refresh').onclick = fetchLiveBuses;
+    renderSheet([]);
+    fetchLiveBuses();
+    setInterval(() => {
+        sendOnBoardPing();
+        fetchLiveBuses();
+    }, 3000);
+})();
+</script>
+</body>
+</html>

@@ -1222,3 +1222,123 @@ def paraderos_seguros_api(request):
             return JsonResponse({"ok": False, "error": str(exc)}, status=400)
     return JsonResponse({"paraderos": obtener_paraderos_seguros()})
 
+
+# ============================================================================
+# TRUXIGO PASAJERO PWA (iOS iPhone / Safari Standalone Installable Web App)
+# ============================================================================
+
+def truxigo_pwa_view(request):
+    """App TruxiGo Pasajero instalable en iPhone (iOS) vía Safari -> Agregar a pantalla de inicio."""
+    rutas = list(Route.objects.filter(active=True).values("id", "code", "name", "color"))
+    return render(
+        request,
+        "gestion/truxigo_pwa.html",
+        {
+            "rutas_json": json.dumps(rutas),
+        },
+    )
+
+
+def truxigo_pwa_manifest(request):
+    """Web App Manifest para instalación en pantalla de inicio en iOS y Android."""
+    manifest = {
+        "name": "TruxiGo · Tránsito de Trujillo",
+        "short_name": "TruxiGo",
+        "description": "Monitoreo de transporte público en tiempo real y Modo A Bordo en Trujillo, Perú.",
+        "start_url": "/truxigo/",
+        "scope": "/truxigo/",
+        "display": "standalone",
+        "orientation": "portrait",
+        "background_color": "#0A0A0E",
+        "theme_color": "#0A0A0E",
+        "lang": "es-PE",
+        "icons": [
+            {
+                "src": "/static/img/truxigo_icon_180.png",
+                "sizes": "180x180",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
+            {
+                "src": "/static/img/truxigo_icon_512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
+        ],
+    }
+    return JsonResponse(manifest, content_type="application/manifest+json")
+
+
+def truxigo_pwa_sw(request):
+    """Service Worker ligero para habilitar experiencia de App instalada (PWA) en iOS/Android."""
+    sw_code = """
+const CACHE_NAME = 'truxigo-pwa-v1';
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
+});
+""".strip()
+    return HttpResponse(sw_code, content_type="application/javascript")
+
+
+def truxigo_pwa_posiciones(request):
+    """Devuelve unidades reales en vivo (Oficiales + Comunidad) sin datos falsos."""
+    posiciones = obtener_posiciones_en_vivo()
+    return JsonResponse({"unidades": posiciones, "total": len(posiciones)})
+
+
+@csrf_exempt
+def truxigo_pwa_colaborativo(request):
+    """Proxy mismo-origen para Modo A Bordo desde iPhone (evita bloqueos CORS de Safari)."""
+    import urllib.request
+    import urllib.error
+    from django.conf import settings
+
+    base = getattr(settings, "TRANSPORTE_API_BASE_URL", "https://transporte-california-api.onrender.com/api/v1").rstrip("/")
+    api_key = getattr(settings, "TRANSPORTE_APP_API_KEY", "transport_api_key_dev_9a8f7c6e5d4b3a2f1e0d9c8b7a6f5e4d")
+
+    if request.method == "POST":
+        try:
+            raw_body = request.body or b"{}"
+            req = urllib.request.Request(
+                f"{base}/unidades/colaborativo",
+                data=raw_body,
+                method="POST",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-API-Key": api_key,
+                },
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                payload = json.loads(resp.read().decode("utf-8") or "{}")
+                return JsonResponse({"ok": True, "unidad": payload})
+        except Exception as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=502)
+
+    if request.method == "DELETE":
+        session_key = (request.GET.get("sessionKey") or "").strip()
+        if not session_key:
+            return JsonResponse({"ok": False, "error": "sessionKey requerido"}, status=400)
+        try:
+            req = urllib.request.Request(
+                f"{base}/unidades/colaborativo/{quote(session_key)}",
+                method="DELETE",
+                headers={"X-API-Key": api_key},
+            )
+            with urllib.request.urlopen(req, timeout=15):
+                return JsonResponse({"ok": True})
+        except Exception as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=502)
+
+    return JsonResponse({"ok": False, "error": "Método no permitido"}, status=405)
+
+
