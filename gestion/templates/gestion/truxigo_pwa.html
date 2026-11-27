@@ -245,7 +245,7 @@
         }
         .ios-install-banner strong { color: var(--text); }
 
-        /* Bottom Sheet Minimalista (Concepto 2 OLED Carbon) */
+        /* Bottom Sheet Minimalista Deslizable con el dedo (Concepto 2 OLED Carbon) */
         .bottom-sheet {
             position: fixed;
             left: 0;
@@ -256,6 +256,12 @@
             border-top: 1px solid var(--border);
             border-radius: 28px 28px 0 0;
             padding: 12px 20px calc(env(safe-area-inset-bottom, 14px) + 14px);
+            touch-action: none;
+            will-change: transform;
+            transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .bottom-sheet.dragging {
+            transition: none;
         }
         .sheet-handle {
             width: 38px;
@@ -1048,6 +1054,57 @@
             }
         } catch (_) {}
     }
+
+    // 8. Gesto táctil para deslizar el Bottom Sheet hacia abajo/arriba con el dedo
+    const bottomSheetEl = document.getElementById('bottom-sheet');
+    const PEEK_HEIGHT_PX = 76;
+    let sheetCollapsed = false;
+    let dragStartY = 0;
+    let dragDeltaY = 0;
+    let isSheetTouchDragging = false;
+
+    function getMaxCollapsePx() {
+        return Math.max(0, (bottomSheetEl.offsetHeight || 220) - PEEK_HEIGHT_PX);
+    }
+
+    function applySheetTransform(offsetPx) {
+        bottomSheetEl.style.transform = `translate3d(0, ${Math.round(offsetPx)}px, 0)`;
+    }
+
+    bottomSheetEl.addEventListener('touchstart', (e) => {
+        if (!e.touches || e.touches.length !== 1) return;
+        isSheetTouchDragging = true;
+        dragStartY = e.touches[0].clientY;
+        dragDeltaY = 0;
+        bottomSheetEl.classList.add('dragging');
+    }, { passive: true });
+
+    bottomSheetEl.addEventListener('touchmove', (e) => {
+        if (!isSheetTouchDragging || !e.touches || e.touches.length !== 1) return;
+        dragDeltaY = e.touches[0].clientY - dragStartY;
+        const maxOff = getMaxCollapsePx();
+        const base = sheetCollapsed ? maxOff : 0;
+        const live = Math.min(maxOff, Math.max(0, base + dragDeltaY));
+        applySheetTransform(live);
+    }, { passive: true });
+
+    function finishSheetDrag() {
+        if (!isSheetTouchDragging) return;
+        isSheetTouchDragging = false;
+        bottomSheetEl.classList.remove('dragging');
+        const maxOff = getMaxCollapsePx();
+        const threshold = Math.max(36, maxOff * 0.2);
+        if (!sheetCollapsed && dragDeltaY > threshold) {
+            sheetCollapsed = true;
+        } else if (sheetCollapsed && dragDeltaY < -threshold) {
+            sheetCollapsed = false;
+        }
+        applySheetTransform(sheetCollapsed ? maxOff : 0);
+        dragDeltaY = 0;
+    }
+
+    bottomSheetEl.addEventListener('touchend', finishSheetDrag);
+    bottomSheetEl.addEventListener('touchcancel', finishSheetDrag);
 
     document.getElementById('chip-refresh').onclick = fetchLiveBuses;
     renderSheet([]);
